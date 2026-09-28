@@ -339,6 +339,65 @@ st.markdown("""
         border-radius: 8px !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
     }
+
+    /* Claude AI 风格快捷指令药丸按钮 (Quick Action Chips) */
+    [data-testid="column"]:first-child div[data-testid="stHorizontalBlock"] {
+        gap: 6px !important;
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
+    }
+    [data-testid="column"]:first-child div[data-testid="stButton"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    [data-testid="column"]:first-child div[data-testid="stButton"] button {
+        height: 36px !important;
+        min-height: 36px !important;
+        max-height: 36px !important;
+        border-radius: 9999px !important; /* Claude 经典的 Pill 药丸胶囊圆角 */
+        background: rgba(30, 41, 59, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #f1f5f9 !important;
+        font-size: 0.82rem !important;
+        font-weight: 500 !important;
+        padding: 0 4px !important;
+        width: 100% !important;
+        white-space: nowrap !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        cursor: pointer !important;
+    }
+    [data-testid="column"]:first-child div[data-testid="stButton"] button p {
+        font-size: 0.82rem !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+        display: inline-block !important;
+        color: inherit !important;
+    }
+    [data-testid="column"]:first-child div[data-testid="stButton"] button:hover {
+        background: rgba(217, 119, 6, 0.16) !important; /* Claude 标志性陶土/暖金微光 */
+        border-color: rgba(245, 158, 11, 0.7) !important;
+        color: #fbbf24 !important;
+        transform: translateY(-1.5px) !important;
+        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25) !important;
+    }
+    [data-testid="column"]:first-child div[data-testid="stButton"] button:hover p {
+        color: #fbbf24 !important;
+    }
+    [data-testid="column"]:first-child div[data-testid="stButton"] button:active {
+        transform: scale(0.96) !important;
+        background: rgba(217, 119, 6, 0.25) !important;
+    }
+    [data-testid="column"]:first-child div[data-testid="stButton"] button:focus:not(:active) {
+        border-color: rgba(245, 158, 11, 0.5) !important;
+        color: #fbbf24 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -620,31 +679,31 @@ with col_agent:
 
             st.rerun()
 
-    # 4 个漂浮在输入框上方的快捷指令按钮 (一键触达核心能力)
+    # 4 个漂浮在输入框上方的快捷指令按钮 (对标 Claude AI Pill 风格，对称等宽，单行不折行)
     btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4, gap="small")
     with btn_col1:
-        if st.button("⚡ /review 审查", use_container_width=True, help="全面排查代码除零、未关文件、空序列等缺陷"):
+        if st.button("⚡ 审查", use_container_width=True, help="/review: 全面排查代码除零、未关文件、越界与安全缺陷"):
             st.session_state.pending_task = {
                 "prompt": "/review: 请对右侧代码进行全面安全与漏洞审查",
                 "task_type": "review"
             }
             st.rerun()
     with btn_col2:
-        if st.button("🛠️ /refactor 重构", use_container_width=True, help="消除坏味道、引入策略模式与防御编程"):
+        if st.button("🛠️ 重构", use_container_width=True, help="/refactor: 消除坏味道、引入设计模式并输出完整重构代码"):
             st.session_state.pending_task = {
                 "prompt": "/refactor: 请对右侧代码消除坏味道，应用合适设计模式并输出完整重构代码",
                 "task_type": "refactor"
             }
             st.rerun()
     with btn_col3:
-        if st.button("🧪 /test 测试", use_container_width=True, help="全分支 pytest 编写并在独立沙箱中自闭环运行"):
+        if st.button("🧪 测试", use_container_width=True, help="/test: 全分支 pytest 编写并在独立沙箱中自闭环运行"):
             st.session_state.pending_task = {
                 "prompt": "/test: 请为右侧代码编写 pytest 并在沙箱中自运行验证",
                 "task_type": "test"
             }
             st.rerun()
     with btn_col4:
-        if st.button("📖 /explain 解释", use_container_width=True, help="逐步解构算法执行流与渐进式时空复杂度"):
+        if st.button("📖 解释", use_container_width=True, help="/explain: 逐步解构算法执行流与渐进式时空复杂度"):
             st.session_state.pending_task = {
                 "prompt": "/explain: 请深入解构右侧代码的算法逻辑与时空复杂度",
                 "task_type": "explain"
