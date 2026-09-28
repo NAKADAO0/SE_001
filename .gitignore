@@ -47,3 +47,6 @@ venv/
 env/
 my_python/
 ENV/
+
+# 临时文件
+~$*

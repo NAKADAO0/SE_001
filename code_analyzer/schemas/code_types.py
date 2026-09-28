@@ -21,6 +21,8 @@ class CodeSmellItem(BaseModel):
     severity: RiskSeverity = Field(RiskSeverity.MEDIUM, description="风险等级")
     description: str = Field(..., description="问题详细分析")
     suggestion: str = Field(..., description="修改或重构建议")
+    snippet: Optional[str] = Field(None, description="问题代码切片")
+    fix_code: Optional[str] = Field(None, description="推荐修复代码片段")
 
 
 class ReviewReport(BaseModel):

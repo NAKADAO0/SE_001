@@ -298,31 +298,158 @@ st.markdown("""
         font-family: monospace;
     }
 
-    /* 缺陷卡片样式 */
+    /* 智能代码审计看板与风险卡片样式 (对标工业级 ReviewResults 面板) */
+    .audit-metrics-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .audit-stat-card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .audit-stat-title {
+        font-size: 0.76rem;
+        color: #94a3b8;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 4px;
+    }
+    .audit-stat-value {
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: #f8fafc;
+        line-height: 1.2;
+    }
+    .audit-stat-sub {
+        font-size: 0.72rem;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    /* 现代结构化缺陷诊断卡片 */
     .issue-card {
-        border-radius: 6px;
-        padding: 8px 12px;
-        margin-bottom: 8px;
-        border-left: 4px solid #cbd5e1;
-        background-color: #f8fafc;
-        color: #1e293b;
-        font-size: 0.85rem;
+        background: #0b1120;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        transition: all 0.2s ease;
+    }
+    .issue-card:hover {
+        border-color: #334155;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
     }
     .issue-card.critical {
-        border-left-color: #ef4444;
-        background-color: #fef2f2;
+        border-left: 4px solid #ef4444;
+        background: linear-gradient(90deg, rgba(239, 68, 68, 0.08) 0%, #0b1120 100%);
     }
     .issue-card.high {
-        border-left-color: #f97316;
-        background-color: #fff7ed;
+        border-left: 4px solid #f97316;
+        background: linear-gradient(90deg, rgba(249, 115, 22, 0.08) 0%, #0b1120 100%);
     }
     .issue-card.medium {
-        border-left-color: #3b82f6;
-        background-color: #eff6ff;
+        border-left: 4px solid #3b82f6;
+        background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, #0b1120 100%);
     }
     .issue-card.low {
-        border-left-color: #10b981;
-        background-color: #f0fdf4;
+        border-left: 4px solid #10b981;
+        background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, #0b1120 100%);
+    }
+
+    .issue-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    .issue-title-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .issue-id {
+        font-family: monospace;
+        font-size: 0.78rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+    .issue-pill {
+        font-size: 0.72rem;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .issue-pill.critical {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .issue-pill.high {
+        background: rgba(249, 115, 22, 0.2);
+        color: #fdba74;
+        border: 1px solid rgba(249, 115, 22, 0.4);
+    }
+    .issue-pill.medium {
+        background: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+    .issue-pill.low {
+        background: rgba(16, 185, 129, 0.2);
+        color: #86efac;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .issue-category-name {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: #f1f5f9;
+    }
+    .issue-loc {
+        font-size: 0.78rem;
+        color: #64748b;
+        font-family: monospace;
+        background: #1e293b;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .issue-snippet-box {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 4px;
+        padding: 6px 12px;
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 0.8rem;
+        color: #f87171;
+        margin: 6px 0 10px 0;
+        white-space: pre-wrap;
+    }
+    .issue-desc {
+        font-size: 0.84rem;
+        color: #cbd5e1;
+        line-height: 1.5;
+        margin-bottom: 6px;
+    }
+    .issue-suggestion-box {
+        background: rgba(30, 41, 59, 0.5);
+        border-left: 3px solid #38bdf8;
+        padding: 6px 10px;
+        border-radius: 0 4px 4px 0;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-top: 6px;
     }
 
     /* 左侧对话助手列弹性与置底吸附 */
@@ -679,34 +806,34 @@ with col_agent:
 
             st.rerun()
 
-    # 4 个漂浮在输入框上方的快捷指令按钮 (对标 Claude AI Pill 风格，对称等宽，单行不折行)
+    # 4 个漂浮在输入框上方的快捷指令按钮 (专精于代码漏洞与安全审计，Claude AI Pill 风格)
     btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4, gap="small")
     with btn_col1:
-        if st.button("⚡ 审查", use_container_width=True, help="/review: 全面排查代码除零、未关文件、越界与安全缺陷"):
+        if st.button("⚡ 全面审查", use_container_width=True, help="/review: 全维度深度排查除零、未关文件、越界与安全缺陷"):
             st.session_state.pending_task = {
-                "prompt": "/review: 请对右侧代码进行全面安全与漏洞审查",
+                "prompt": "/review: 请对右侧代码进行全维度的深度安全与漏洞审查",
                 "task_type": "review"
             }
             st.rerun()
     with btn_col2:
-        if st.button("🛠️ 重构", use_container_width=True, help="/refactor: 消除坏味道、引入设计模式并输出完整重构代码"):
+        if st.button("➗ 崩溃排查", use_container_width=True, help="/review: 重点排查除以零、空序列max/min、下标越界等运行时崩溃点"):
             st.session_state.pending_task = {
-                "prompt": "/refactor: 请对右侧代码消除坏味道，应用合适设计模式并输出完整重构代码",
-                "task_type": "refactor"
+                "prompt": "/review: 专项排查代码中的除零、空序列、下标越界等运行时致命崩溃隐患",
+                "task_type": "review"
             }
             st.rerun()
     with btn_col3:
-        if st.button("🧪 测试", use_container_width=True, help="/test: 全分支 pytest 编写并在独立沙箱中自闭环运行"):
+        if st.button("📂 资源审计", use_container_width=True, help="/review: 重点排查裸open未关闭、文件句柄泄漏与资源释放安全"):
             st.session_state.pending_task = {
-                "prompt": "/test: 请为右侧代码编写 pytest 并在沙箱中自运行验证",
-                "task_type": "test"
+                "prompt": "/review: 专项审计代码中裸open文件未关闭、句柄泄漏及外部资源释放安全",
+                "task_type": "review"
             }
             st.rerun()
     with btn_col4:
-        if st.button("📖 解释", use_container_width=True, help="/explain: 逐步解构算法执行流与渐进式时空复杂度"):
+        if st.button("🛡️ 异常防御", use_container_width=True, help="/review: 重点排查裸except异常吞噬、静默pass与边界类型防御缺失"):
             st.session_state.pending_task = {
-                "prompt": "/explain: 请深入解构右侧代码的算法逻辑与时空复杂度",
-                "task_type": "explain"
+                "prompt": "/review: 专项排查代码中的裸except异常吞噬、静默忽略与输入边界防御缺失",
+                "task_type": "review"
             }
             st.rerun()
 
@@ -804,10 +931,10 @@ with col_editor:
                 st.metric("初筛坏味道", cur_issues)
 
     with t_c4:
-        if st.button("✨ 一键重构", type="primary", use_container_width=True):
+        if st.button("⚡ 深度审查", type="primary", use_container_width=True, help="立即启动 CodeReviewerAgent 深度审查当前代码"):
             st.session_state.pending_task = {
-                "prompt": "/refactor: 请重构当前代码并生成对比 Diff",
-                "task_type": "refactor"
+                "prompt": "/review: 请对右侧代码进行全面安全与漏洞审查，深入排查隐蔽运行时崩溃风险、未处理异常与资源泄漏，并给出修复后的对比代码",
+                "task_type": "review"
             }
             st.rerun()
 
@@ -816,15 +943,190 @@ with col_editor:
             st.session_state.baseline_code = st.session_state.active_code
             st.toast("已保存当前代码为基准！", icon="💾")
 
-    # 2. 核心选项卡系统：代码内容直接顶格全景呈现 (最大化纵向可视空间)
-    tab_editor, tab_diff, tab_terminal, tab_problems = st.tabs([
+    # 2. 核心选项卡系统：专精代码缺陷与安全审计工作台 (首选展示缺陷诊断看板)
+    tab_problems, tab_editor, tab_diff, tab_terminal = st.tabs([
+        f"⚠️ 缺陷诊断与审计看板 ({cur_issues})",
         f"📄 {Path(st.session_state.get('active_file_name', 'main.py')).name} (代码主体)",
-        "🔀 修改前后对比 (Diff)",
-        "🧪 终端沙箱 (Terminal)",
-        f"⚠️ 缺陷诊断 ({cur_issues})"
+        "🔀 修复前后对比 (Diff)",
+        "🧪 终端沙箱 (Terminal)"
     ])
 
-    # ===== Tab 1: IDE 代码主体编辑器 (占据 90% 以上可视区域) =====
+    # ===== Tab 1: 缺陷诊断与审计大屏 (专精代码审查核心面板，对标工业级 ReviewResults) =====
+    with tab_problems:
+        issues = rule_res.get("issues", [])
+        
+        # 1. 统计计算指标看板
+        crit_cnt = sum(1 for i in issues if getattr(i.severity, 'value', str(i.severity)) == "CRITICAL")
+        high_cnt = sum(1 for i in issues if getattr(i.severity, 'value', str(i.severity)) == "HIGH")
+        med_cnt = sum(1 for i in issues if getattr(i.severity, 'value', str(i.severity)) == "MEDIUM")
+        low_cnt = sum(1 for i in issues if getattr(i.severity, 'value', str(i.severity)) == "LOW")
+        
+        health_score = max(0, 100 - crit_cnt * 25 - high_cnt * 15 - med_cnt * 5)
+        if health_score >= 90:
+            grade_text, grade_color = "A (优秀)", "#4ade80"
+        elif health_score >= 75:
+            grade_text, grade_color = "B (良好)", "#60a5fa"
+        elif health_score >= 60:
+            grade_text, grade_color = "C (需整改)", "#fbbf24"
+        else:
+            grade_text, grade_color = "D (高危风险)", "#f87171"
+
+        # 渲染顶部 4 列现代数据指标卡
+        st.markdown(f"""
+<div class="audit-metrics-row">
+    <div class="audit-stat-card">
+        <div class="audit-stat-title">🛡️ 安全健康评分</div>
+        <div class="audit-stat-value" style="color: {grade_color};">{health_score} <span style="font-size: 0.85rem; font-weight: 500;">/ 100</span></div>
+        <div class="audit-stat-sub">评级: <strong>{grade_text}</strong></div>
+    </div>
+    <div class="audit-stat-card">
+        <div class="audit-stat-title">🔴 致命崩溃风险 (P0)</div>
+        <div class="audit-stat-value" style="color: #f87171;">{crit_cnt} <span style="font-size: 0.8rem; font-weight: normal; color: #94a3b8;">处</span></div>
+        <div class="audit-stat-sub">除零、空值越界、致命异常</div>
+    </div>
+    <div class="audit-stat-card">
+        <div class="audit-stat-title">🟠 高危安全与泄漏 (P1)</div>
+        <div class="audit-stat-value" style="color: #fb923c;">{high_cnt} <span style="font-size: 0.8rem; font-weight: normal; color: #94a3b8;">处</span></div>
+        <div class="audit-stat-sub">句柄未关、裸except异常吞噬</div>
+    </div>
+    <div class="audit-stat-card">
+        <div class="audit-stat-title">🔵 中危与坏味道 (P2)</div>
+        <div class="audit-stat-value" style="color: #60a5fa;">{med_cnt} <span style="font-size: 0.8rem; font-weight: normal; color: #94a3b8;">处</span></div>
+        <div class="audit-stat-sub">参数过多、可变默认参数</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+        # 2. 交互式过滤工具栏与报告导出
+        filter_c1, filter_c2, filter_c3 = st.columns([2.8, 2.4, 1.8], gap="small")
+        with filter_c1:
+            severity_filter = st.selectbox(
+                "严重级别筛选",
+                ["全部严重度 (All)", "🔴 仅看致命风险 (Critical)", "🟠 仅看高危隐患 (High)", "🔵 仅看中危问题 (Medium)"],
+                index=0,
+                label_visibility="collapsed"
+            )
+        with filter_c2:
+            search_query = st.text_input("搜索缺陷...", placeholder="🔍 快速搜索缺陷或函数名...", label_visibility="collapsed")
+        with filter_c3:
+            # 报告导出 Popover
+            with st.popover("📥 导出审计报告", use_container_width=True):
+                st.markdown("##### 📄 源代码安全与漏洞审查报告")
+                # 拼接结构化 Markdown 报告文本
+                rep_lines = [
+                    f"# Python 源代码安全与缺陷审计报告",
+                    f"- **审计目标**: `{Path(st.session_state.get('active_file_name', 'source.py')).name}`",
+                    f"- **安全评分**: **{health_score} / 100** ({grade_text})",
+                    f"- **缺陷总计**: {len(issues)} 处 (致命 {crit_cnt} | 高危 {high_cnt} | 中危 {med_cnt})",
+                    f"\n## 一、缺陷清单与深度整改方案",
+                ]
+                for idx, iss in enumerate(issues, 1):
+                    sev_str = getattr(iss.severity, 'value', str(iss.severity))
+                    line_no = getattr(iss, 'line', 1)
+                    cat_name = getattr(iss, 'category', '未知分类')
+                    desc = getattr(iss, 'description', '')
+                    sugg = getattr(iss, 'suggestion', '')
+                    snip = getattr(iss, 'snippet', '')
+                    rep_lines.append(f"### [R-{idx:02d}] [{sev_str}] 第 {line_no} 行: {cat_name}")
+                    if snip:
+                        rep_lines.append(f"```python\n# 缺陷代码行\n{snip}\n```")
+                    rep_lines.append(f"- **机理剖析**: {desc}")
+                    rep_lines.append(f"- **修复建议**: {sugg}\n")
+                
+                if st.session_state.get("analysis_result"):
+                    p2_rep = st.session_state.analysis_result.get("phase2", {}).get("report", "")
+                    if p2_rep:
+                        rep_lines.append(f"\n## 二、专家智能体综合审计报告\n{p2_rep}")
+
+                full_report_md = "\n".join(rep_lines)
+                st.caption(f"共包含 {len(issues)} 处缺陷分析及整改依据。")
+                st.download_button(
+                    label="💾 下载 Markdown 审查报告",
+                    data=full_report_md,
+                    file_name=f"audit_report_{Path(st.session_state.get('active_file_name', 'code')).stem}.md",
+                    mime="text/markdown",
+                    use_container_width=True
+                )
+
+        # 3. 执行过滤
+        filtered_issues = []
+        for iss in issues:
+            sev_val = getattr(iss.severity, 'value', str(iss.severity))
+            if "致命" in severity_filter and sev_val != "CRITICAL":
+                continue
+            if "高危" in severity_filter and sev_val != "HIGH":
+                continue
+            if "中危" in severity_filter and sev_val != "MEDIUM":
+                continue
+            if search_query:
+                q = search_query.lower()
+                desc_text = getattr(iss, 'description', '').lower()
+                cat_text = getattr(iss, 'category', '').lower()
+                if q not in desc_text and q not in cat_text:
+                    continue
+            filtered_issues.append(iss)
+
+        # 4. 渲染各风险卡片
+        if filtered_issues:
+            for idx, iss in enumerate(filtered_issues, 1):
+                sev_val = getattr(iss.severity, 'value', str(iss.severity))
+                sev_cls = "critical" if sev_val == "CRITICAL" else ("high" if sev_val == "HIGH" else "medium")
+                line_no = getattr(iss, "line", 1)
+                cat_name = getattr(iss, "category", "潜在缺陷")
+                desc = getattr(iss, "description", "")
+                sugg = getattr(iss, "suggestion", "")
+                snippet = getattr(iss, "snippet", "")
+                fix_code = getattr(iss, "fix_code", "")
+
+                snippet_html = f'<div class="issue-snippet-box">▶ {snippet}</div>' if snippet else ''
+                fix_html = f'<div class="issue-suggestion-box">💡 <strong>推荐修复方案：</strong><br/>{sugg}</div>'
+
+                st.markdown(f"""
+<div class="issue-card {sev_cls}">
+    <div class="issue-header">
+        <div class="issue-title-group">
+            <span class="issue-id">[R-{idx:02d}]</span>
+            <span class="issue-pill {sev_cls}">{sev_val}</span>
+            <span class="issue-category-name">{cat_name}</span>
+        </div>
+        <span class="issue-loc">📍 第 {line_no} 行</span>
+    </div>
+    {snippet_html}
+    <div class="issue-desc">{desc}</div>
+    {fix_html}
+</div>
+""", unsafe_allow_html=True)
+
+                # 风险卡片专属操作按钮行 (一键修复 / 深度追问)
+                act_c1, act_c2 = st.columns([1, 1])
+                with act_c1:
+                    if st.button(f"🛠️ 针对 [R-{idx:02d}] 一键修复", key=f"btn_fix_{idx}", use_container_width=True):
+                        st.session_state.pending_task = {
+                            "prompt": f"/refactor: 请针对第 {line_no} 行的【{cat_name}】漏洞进行彻底修复并输出完整重构代码，杜绝运行时异常",
+                            "task_type": "refactor"
+                        }
+                        st.toast(f"已向专家发起针对 [R-{idx:02d}] 的精准修复！", icon="🛠️")
+                        st.rerun()
+                with act_c2:
+                    if st.button(f"💬 深度追问此漏洞", key=f"btn_ask_{idx}", use_container_width=True):
+                        st.session_state.pending_task = {
+                            "prompt": f"/review: 请向我深入解释第 {line_no} 行出现的【{cat_name}】漏洞：在何种特定业务输入或边界条件下会触发？它的底层运行机制是什么？如何从架构层面彻底杜绝？",
+                            "task_type": "review"
+                        }
+                        st.toast(f"已向 Copilot 发起深度技术追问！", icon="💬")
+                        st.rerun()
+        else:
+            st.success("✅ 当前筛选条件下未发现缺陷，代码符合规范！")
+
+        # 5. 专家 Agent 深度综合审计报告展示
+        if st.session_state.get("analysis_result"):
+            p2 = st.session_state.analysis_result.get("phase2", {})
+            if p2.get("report"):
+                st.markdown("<hr style='margin: 16px 0; border: none; border-top: 1px dashed #334155;'/>", unsafe_allow_html=True)
+                with st.expander("📄 查看专家 Agent 深度综合审计报告", expanded=True):
+                    st.markdown(p2["report"])
+
+    # ===== Tab 2: IDE 代码主体编辑器 =====
     with tab_editor:
         edited_code = st.text_area(
             "代码主体",
@@ -836,7 +1138,7 @@ with col_editor:
         if edited_code != st.session_state.active_code:
             st.session_state.active_code = edited_code
 
-    # ===== Tab 2: 修改前后对比 (Diff Viewer) =====
+    # ===== Tab 3: 修改前后对比 (Diff Viewer) =====
     with tab_diff:
         refactored = st.session_state.get("refactored_code")
         if not refactored and "shopping_cart" in st.session_state.get("active_file_name", ""):
@@ -858,7 +1160,6 @@ with col_editor:
             with diff_btn_col3:
                 diff_mode = st.radio("对比模式", ["并排对比 (Side-by-Side)", "增量补丁 (Unified Diff)"], horizontal=True, label_visibility="collapsed")
 
-            # 架构清单默认折叠，不侵占代码对比视线
             with st.expander("🎯 查看【架构重构与功能对齐清单】", expanded=False):
                 st.markdown("""
 | 业务模块 / 函数 | 🔴 修改前 (原始缺陷代码) | 🟢 修改后 (重构防御代码) | 应用设计模式 / 改进收益 |
@@ -893,15 +1194,15 @@ with col_editor:
                 else:
                     st.info("当前基线代码与重构代码完全一致，无增量差异。")
         else:
-            st.info("💡 尚未生成重构代码。请在左侧输入 `/refactor` 或点击上方【✨ 一键重构】按钮生成！")
+            st.info("💡 尚未生成修复代码。请在左侧输入 `/review` 或点击上方【⚡ 深度审查】按钮生成！")
 
-    # ===== Tab 3: 沙箱终端 (Terminal & Test) =====
+    # ===== Tab 4: 沙箱终端 (Terminal) =====
     with tab_terminal:
         t_output = st.session_state.get("test_sandbox_output", "")
         if t_output:
             st.markdown(f'<div class="terminal-window">>_ 沙箱执行输出：\n\n{t_output}</div>', unsafe_allow_html=True)
         else:
-            st.markdown('<div class="terminal-window">>_ 终端就绪 (等待执行测试或代码运行任务...)\n> 提示：在左侧输入 `/test`，TestGeneratorAgent 将自动在此运行 pytest 测试套件。</div>', unsafe_allow_html=True)
+            st.markdown('<div class="terminal-window">>_ 终端就绪 (等待代码审查与沙箱运行验证任务...)\n> 提示：在左侧输入指令，CodeReviewerAgent 将在沙箱中动态验证缺陷。</div>', unsafe_allow_html=True)
 
         if st.button("🧪 在当前沙箱执行单测 (Run Pytest)", use_container_width=True):
             st.session_state.pending_task = {
@@ -909,30 +1210,3 @@ with col_editor:
                 "task_type": "test"
             }
             st.rerun()
-
-    # ===== Tab 4: 缺陷诊断清单 (Problems) =====
-    with tab_problems:
-        issues = rule_res.get("issues", [])
-        if issues:
-            st.markdown(f"**检出 {len(issues)} 处潜在静态风险与坏味道：**")
-            for iss in issues:
-                sev = getattr(iss, "severity", RiskSeverity.MEDIUM)
-                sev_val = getattr(sev, "value", str(sev))
-                sev_cls = "critical" if sev_val == "CRITICAL" else ("high" if sev_val == "HIGH" else "medium")
-                line_no = getattr(iss, "line", getattr(iss, "line_number", 1))
-                desc = getattr(iss, "description", str(iss))
-                sugg = getattr(iss, "suggestion", "建议参考重构方案进行修复")
-                st.markdown(f"""
-<div class="issue-card {sev_cls}">
-    <strong>[{sev_val}] 第 {line_no} 行:</strong> {desc}
-    <br/><span style="color: #64748b; font-size: 0.8rem;">建议措施: {sugg}</span>
-</div>
-""", unsafe_allow_html=True)
-        else:
-            st.success("✅ 未发现明显 AST 静态风险规则触发。")
-
-        if st.session_state.get("analysis_result"):
-            p2 = st.session_state.analysis_result.get("phase2", {})
-            if p2.get("report"):
-                with st.expander("📄 查看专家 Agent 深度综合审计报告", expanded=False):
-                    st.markdown(p2["report"])
