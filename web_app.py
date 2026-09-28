@@ -753,6 +753,44 @@ st.markdown("""
         color: #f87171 !important;
     }
 
+    /* 中间列导出修改后源码按钮 (统一 38px 高度，醒目科技绿) */
+    [data-testid="column"]:nth-child(2) div[data-testid="stDownloadButton"] {
+        width: 100% !important;
+    }
+    [data-testid="column"]:nth-child(2) div[data-testid="stDownloadButton"] button {
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        border-radius: 8px !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3) !important;
+        transition: all 0.2s ease !important;
+        width: 100% !important;
+    }
+    [data-testid="column"]:nth-child(2) div[data-testid="stDownloadButton"] button:hover {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45) !important;
+        transform: translateY(-1px) !important;
+    }
+    [data-testid="column"]:nth-child(2) div[data-testid="stDownloadButton"] button p {
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        font-size: 0.85rem !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+        color: inherit !important;
+    }
+
     /* 源代码检视器与风险行高亮 (Source Code Risk Highlighter) */
     .source-viewer-card {
         background: #090d16;
@@ -1138,11 +1176,14 @@ with col_left:
                     "steps": current_steps,
                 })
 
-                # 智能提取重构代码更新 Diff
+                # 智能提取修复代码并直接在源码中修改 (支持保留基准并展示 Diff)
                 extracted_code = extract_best_refactored_code(answer, st.session_state.baseline_code)
                 if extracted_code:
+                    if not st.session_state.baseline_code:
+                        st.session_state.baseline_code = st.session_state.active_code
+                    st.session_state.active_code = extracted_code
                     st.session_state.refactored_code = extracted_code
-                    st.toast("已在中间视图生成修改前后对比 Diff！", icon="🔀")
+                    st.toast("全面审查完毕！已直接在源码中应用修复，并在下方生成对比 Diff！", icon="✨")
 
                 sandbox_logs = [
                     str(s.get("output", ""))
@@ -1276,17 +1317,9 @@ with col_center:
                     st.rerun()
 
     else:
-        # 已有代码：顶部单行工具栏 (模式切换、启动审查按钮、上传、样例、清空)
-        # 1. 核心操作控制栏 (全面代码审查 + 上传 + 样例 + 清空)
-        op_c1, op_c2, op_c3, op_c4 = st.columns([3.6, 2.0, 2.0, 0.9], gap="small")
+        # 1. 核心操作控制栏 (📤 上传代码 + 📚 样例代码 + 💾 导出修改后源码 + 🗑️ 清空)
+        op_c1, op_c2, op_c3, op_c4 = st.columns([2.4, 2.4, 3.2, 0.8], gap="small")
         with op_c1:
-            if st.button("⚡ 全面代码审查", type="primary", use_container_width=True, help="启动 CodeReviewerAgent 深入排查代码质量、隐蔽Bug与安全漏洞"):
-                st.session_state.pending_task = {
-                    "prompt": "/review: 请对当前代码进行全维度的深度全面代码审查，深入排查除零、未关文件、越界与异常掩盖等隐患，并给出修复建议与对比代码",
-                    "task_type": "review"
-                }
-                st.rerun()
-        with op_c2:
             with st.popover("📤 上传代码", use_container_width=True):
                 st.markdown("##### 📤 上传本地 Python 源码")
                 up_replace = st.file_uploader("选择 .py 文件", type=["py"], key="replace_source_upload")
@@ -1301,7 +1334,7 @@ with col_center:
                         st.session_state.refactored_code = None
                         st.toast(f"已更新源码: {up_replace.name}", icon="📤")
                         st.rerun()
-        with op_c3:
+        with op_c2:
             with st.popover("📚 样例代码", use_container_width=True):
                 st.markdown("##### 📚 快速载入测试样例")
                 sample_files = {
@@ -1320,6 +1353,20 @@ with col_center:
                         st.session_state.analysis_result = None
                         st.session_state.refactored_code = None
                         st.rerun()
+        with op_c3:
+            # 导出当前修改后的 Python 源码
+            out_filename = Path(st.session_state.get("active_file_name", "code.py")).name
+            if not out_filename.endswith(".py"):
+                out_filename += ".py"
+            export_filename = f"reviewed_{out_filename}" if st.session_state.get("reviewed") else out_filename
+            st.download_button(
+                label="💾 导出修改后源码",
+                data=st.session_state.active_code,
+                file_name=export_filename,
+                mime="text/x-python",
+                use_container_width=True,
+                help="将当前已审查并修改的 Python 源码导出下载至本地"
+            )
         with op_c4:
             if st.button("🗑️", help="清空当前代码，恢复初始空状态", use_container_width=True):
                 st.session_state.active_code = ""
@@ -1357,9 +1404,9 @@ with col_center:
             )
             st.markdown(rendered_html, unsafe_allow_html=True)
             if st.session_state.reviewed and highlight_issues:
-                st.caption(f"💡 审查已完成：命中 **{len(highlight_issues)}** 处风险行标记，悬停红色/橙色高亮行可查看机理成因。")
+                st.caption(f"💡 审查完成：修改已直接在源码中生效，命中 **{len(highlight_issues)}** 处风险行标记，悬停红色/橙色高亮行可查看机理成因。")
             elif not st.session_state.reviewed:
-                st.caption("💡 提示：点击上方【⚡ 启动代码审查】后，将在此自动标注红橙风险高亮与悬停诊断！")
+                st.caption("💡 提示：在左侧点击【⚡ 启动全面代码审查】后，将自动在源码中修改并标注红橙风险高亮！")
         else:
             edited_code = st.text_area(
                 "编辑代码",
@@ -1370,42 +1417,39 @@ with col_center:
             )
             if edited_code != st.session_state.active_code:
                 st.session_state.active_code = edited_code
-                st.session_state.baseline_code = edited_code
 
-        # 底部折叠抽屉：修改对比 Diff
-        refactored = st.session_state.get("refactored_code")
-        if not refactored and "shopping_cart" in st.session_state.get("active_file_name", ""):
-            refactored = DEFAULT_REFACTORED_SHOPPING_CART
-            st.session_state.refactored_code = refactored
+        # 底部折叠抽屉：修改前后对比 Diff Viewer (展示修改前基线 vs 当前源码)
+        has_diff = bool(
+            st.session_state.baseline_code
+            and st.session_state.active_code.strip() != st.session_state.baseline_code.strip()
+        )
 
-        with st.expander("🔀 修改前后对比 Diff (重构建议视图)", expanded=False):
-            if refactored:
-                diff_c1, diff_c2 = st.columns([1, 1])
+        with st.expander(f"🔀 修改前后对比 Diff {'(已在上方源码中直接应用修改 · 点击展开差异对比)' if has_diff else '(查看修改差异对比)'}", expanded=has_diff):
+            if has_diff:
+                diff_c1, diff_c2 = st.columns([2.0, 1.0])
                 with diff_c1:
-                    if st.button("✅ 采纳此重构代码", type="primary", use_container_width=True):
-                        st.session_state.active_code = refactored
-                        st.toast("已采纳修复代码！", icon="🎉")
-                        st.rerun()
+                    st.info("💡 修复已直接在上方源码中修改生效，下方为针对原始问题代码的差异补丁：")
                 with diff_c2:
-                    if st.button("↩️ 还原基线", use_container_width=True):
+                    if st.button("↩️ 撤销修改 (恢复原始代码)", use_container_width=True):
                         st.session_state.active_code = st.session_state.baseline_code
-                        st.toast("已还原至初始基准代码！", icon="↩️")
+                        st.session_state.refactored_code = None
+                        st.toast("已恢复至修改前的原始基准代码！", icon="↩️")
                         st.rerun()
 
                 diff_lines = list(difflib.unified_diff(
                     st.session_state.baseline_code.splitlines(keepends=True),
-                    refactored.splitlines(keepends=True),
-                    fromfile="a/original.py",
-                    tofile="b/refactored.py",
+                    st.session_state.active_code.splitlines(keepends=True),
+                    fromfile="a/修改前原始代码.py",
+                    tofile="b/直接修改后源码.py",
                     n=3,
                 ))
                 patch_text = "".join(diff_lines)
                 if patch_text:
                     st.code(patch_text, language="diff")
                 else:
-                    st.info("当前基线代码与重构代码完全一致，无增量差异。")
+                    st.info("当前源码与基准代码完全一致。")
             else:
-                st.info("💡 尚未生成修复代码。点击上方【⚡ 启动代码审查】即可生成！")
+                st.caption("💡 尚未在源码中产生修改差异。请在左侧点击【⚡ 启动全面代码审查】，审查后将自动在源码中修改并在上方提供【💾 导出修改后源码】。")
 
         # 底部折叠抽屉：沙箱终端
         with st.expander("🧪 终端沙箱输出 (Terminal)", expanded=False):
@@ -1431,8 +1475,8 @@ with col_right:
     <div class="empty-state-title">暂无风险内容</div>
     <div class="empty-state-desc">
         当前尚未执行代码审查。<br/>
-        请在中间区域载入源代码，并点击<strong>【⚡ 启动代码审查】</strong>。<br/><br/>
-        审查完成后，CodeReviewerAgent 将在此展示深度安全健康评分、致命崩溃与高危风险点、以及逐行整改建议。
+        请在中间区域载入源代码，并在左侧点击<strong>【⚡ 启动全面代码审查】</strong>。<br/><br/>
+        审查完成后，修复代码将直接应用在中间源码中，右侧将呈现深度安全健康评分、致命崩溃与高危风险点，并可在中间随时导出修改后的 Python 源码。
     </div>
 </div>
 """, unsafe_allow_html=True)
