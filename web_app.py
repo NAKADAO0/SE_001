@@ -721,23 +721,31 @@ with col_agent:
 # 文件切换工具条、当前代码编辑、修改对比 Diff、沙箱终端 Terminal、缺陷诊断 Problems
 # -------------------------------------------------------------
 with col_editor:
-    # 1. IDE 顶部操作工具条
+    # 1. 极简单行 IDE 控制工具栏 (信息与操作全部缩小收缩为轻量级按钮，代码占据绝对主体)
     sample_files = {
         "samples/demo_shopping_cart.py (电商购物车: 含除零/句柄未关/硬编码折扣)": "samples/demo_shopping_cart.py",
         "samples/buggy_code.py (典型坏味道与逻辑缺陷)": "samples/buggy_code.py",
         "samples/math_utils.py (算法样例与单元测试)": "samples/math_utils.py",
     }
 
-    bar_col1, bar_col2, bar_col3, bar_col4 = st.columns([3.2, 1.4, 1.2, 1.2])
-    with bar_col1:
+    rule_res = st.session_state.pipeline.rule_engine.analyze_source(st.session_state.active_code)
+    cur_lines = len(st.session_state.active_code.splitlines())
+    cur_funcs = len(rule_res.get("functions", []))
+    cur_classes = len(rule_res.get("classes", []))
+    cur_issues = len(rule_res.get("issues", []))
+
+    # 一行放齐全部控件：文件选择、上传按钮、度量统计按钮、一键重构按钮、保存基线按钮
+    t_c1, t_c2, t_c3, t_c4, t_c5 = st.columns([3.2, 1.2, 1.6, 1.2, 1.0], gap="small")
+
+    with t_c1:
         sel_sample = st.selectbox(
             "选择文件",
             options=list(sample_files.keys()),
             index=0,
             label_visibility="collapsed",
         )
-    with bar_col2:
-        if st.button("📂 切换样例", use_container_width=True):
+        if st.session_state.get("_prev_sample") != sel_sample:
+            st.session_state._prev_sample = sel_sample
             target_path = sample_files[sel_sample]
             p = Path(target_path)
             if p.exists():
@@ -749,21 +757,35 @@ with col_editor:
                     st.session_state.refactored_code = DEFAULT_REFACTORED_SHOPPING_CART
                 else:
                     st.session_state.refactored_code = None
-                st.toast(f"已载入文件: {target_path}", icon="📄")
-                st.rerun()
-    with bar_col3:
-        right_upload = st.file_uploader("上传 .py", type=["py"], key="right_py_upload", label_visibility="collapsed")
-        if right_upload is not None:
-            f_content = right_upload.read().decode("utf-8", errors="replace")
-            if f_content != st.session_state.active_code:
-                st.session_state.active_code = f_content
-                st.session_state.baseline_code = f_content
-                st.session_state.active_file_name = right_upload.name
-                st.session_state.refactored_code = None
-                st.toast(f"已上传并同步: {right_upload.name}", icon="📤")
-                st.rerun()
-    with bar_col4:
-        # 一键快速重构快捷按钮
+
+    with t_c2:
+        # 上传文件收缩为轻量按钮，点击弹出上传，不占主页面高度
+        with st.popover("📤 上传", use_container_width=True):
+            st.markdown("##### 📤 上传本地 Python 源码")
+            up_f = st.file_uploader("选择 .py 文件", type=["py"], key="compact_upload")
+            if up_f is not None:
+                content = up_f.read().decode("utf-8", errors="replace")
+                if content != st.session_state.active_code:
+                    st.session_state.active_code = content
+                    st.session_state.baseline_code = content
+                    st.session_state.active_file_name = up_f.name
+                    st.session_state.refactored_code = None
+                    st.toast(f"已装载: {up_f.name}", icon="📤")
+                    st.rerun()
+
+    with t_c3:
+        # 4 个大号 Metric 压缩为单行轻量按钮，点击浮现详细度量面板
+        with st.popover(f"📊 {cur_lines}行·{cur_funcs}函数·{cur_issues}风险", use_container_width=True):
+            st.markdown("##### 📊 代码静态度量概览")
+            m_a, m_b = st.columns(2)
+            with m_a:
+                st.metric("代码行数", cur_lines)
+                st.metric("定义函数", cur_funcs)
+            with m_b:
+                st.metric("定义类", cur_classes)
+                st.metric("初筛坏味道", cur_issues)
+
+    with t_c4:
         if st.button("✨ 一键重构", type="primary", use_container_width=True):
             st.session_state.pending_task = {
                 "prompt": "/refactor: 请重构当前代码并生成对比 Diff",
@@ -771,58 +793,56 @@ with col_editor:
             }
             st.rerun()
 
-    # 2. 静态度量元信息条
-    rule_res = st.session_state.pipeline.rule_engine.analyze_source(st.session_state.active_code)
-    m1, m2, m3, m4 = st.columns(4)
-    with m1:
-        st.metric("代码行数", len(st.session_state.active_code.splitlines()))
-    with m2:
-        st.metric("定义函数", len(rule_res["functions"]))
-    with m3:
-        st.metric("定义类", len(rule_res.get("classes", [])))
-    with m4:
-        st.metric("初筛坏味道", len(rule_res.get("issues", [])))
+    with t_c5:
+        if st.button("💾 保存", use_container_width=True, help="保存当前编辑的代码为基准版本"):
+            st.session_state.baseline_code = st.session_state.active_code
+            st.toast("已保存当前代码为基准！", icon="💾")
 
-    # 3. IDE 核心选项卡系统 (Editor / Diff / Terminal / Problems)
+    # 2. 核心选项卡系统：代码内容直接顶格全景呈现 (最大化纵向可视空间)
     tab_editor, tab_diff, tab_terminal, tab_problems = st.tabs([
-        f"📄 {Path(st.session_state.get('active_file_name', 'main.py')).name} (代码编辑器)",
-        "🔀 修改前后对比 (Diff Viewer)",
-        "🧪 终端与执行沙箱 (Terminal)",
-        "⚠️ 缺陷诊断清单 (Problems)"
+        f"📄 {Path(st.session_state.get('active_file_name', 'main.py')).name} (代码主体)",
+        "🔀 修改前后对比 (Diff)",
+        "🧪 终端沙箱 (Terminal)",
+        f"⚠️ 缺陷诊断 ({cur_issues})"
     ])
 
-    # ===== Tab 1: IDE 代码主体编辑器 =====
+    # ===== Tab 1: IDE 代码主体编辑器 (占据 90% 以上可视区域) =====
     with tab_editor:
-        st.caption(f"当前源文件: `{st.session_state.get('active_file_name', 'untitled.py')}` (支持在下方直接编辑代码并实时同步)")
         edited_code = st.text_area(
-            "代码编辑器",
+            "代码主体",
             value=st.session_state.active_code,
-            height=540,
+            height=660,
             key="ide_source_editor",
             label_visibility="collapsed",
         )
         if edited_code != st.session_state.active_code:
             st.session_state.active_code = edited_code
 
-        # 编辑器底部动作条
-        act_col1, act_col2, act_col3 = st.columns([1.5, 1.5, 3])
-        with act_col1:
-            if st.button("💾 保存当前代码为基准", use_container_width=True):
-                st.session_state.baseline_code = st.session_state.active_code
-                st.toast("已保存当前代码为基线版本！", icon="💾")
-        with act_col2:
-            if st.button("📋 重新格式化/校验", use_container_width=True):
-                st.session_state.pipeline.rule_engine.clear_cache()
-                st.toast("已重新校验 AST 语法树", icon="🔍")
-                st.rerun()
-
     # ===== Tab 2: 修改前后对比 (Diff Viewer) =====
     with tab_diff:
-        st.caption("直观对比原始代码与 AI 智能体重构后的全量代码，审查架构设计模式与防御逻辑。")
+        refactored = st.session_state.get("refactored_code")
+        if not refactored and "shopping_cart" in st.session_state.get("active_file_name", ""):
+            refactored = DEFAULT_REFACTORED_SHOPPING_CART
+            st.session_state.refactored_code = refactored
 
-        # 架构重构与功能对齐说明清单
-        with st.expander("🎯 查看【架构重构与功能对齐清单】(消除 5 项核心代码坏味道)", expanded=True):
-            st.markdown("""
+        if refactored:
+            diff_btn_col1, diff_btn_col2, diff_btn_col3 = st.columns([1.6, 1.6, 3.2])
+            with diff_btn_col1:
+                if st.button("✅ 采纳修改 (Accept)", type="primary", use_container_width=True):
+                    st.session_state.active_code = refactored
+                    st.toast("已采纳 AI 重构代码并覆盖至主编辑器！", icon="🎉")
+                    st.rerun()
+            with diff_btn_col2:
+                if st.button("↩️ 还原基线 (Revert)", use_container_width=True):
+                    st.session_state.active_code = st.session_state.baseline_code
+                    st.toast("已还原至初始基准代码！", icon="↩️")
+                    st.rerun()
+            with diff_btn_col3:
+                diff_mode = st.radio("对比模式", ["并排对比 (Side-by-Side)", "增量补丁 (Unified Diff)"], horizontal=True, label_visibility="collapsed")
+
+            # 架构清单默认折叠，不侵占代码对比视线
+            with st.expander("🎯 查看【架构重构与功能对齐清单】", expanded=False):
+                st.markdown("""
 | 业务模块 / 函数 | 🔴 修改前 (原始缺陷代码) | 🟢 修改后 (重构防御代码) | 应用设计模式 / 改进收益 |
 | :--- | :--- | :--- | :--- |
 | **优惠券折扣计算** (`apply_coupon`) | 庞大硬编码 `if-elif` 分支，难以扩展 | 引入 `DiscountStrategy` 策略抽象与派生类分发 | **策略模式 (Strategy Pattern)**，符合开闭原则 |
@@ -830,28 +850,8 @@ with col_editor:
 | **审计日志安全释放** (`coupon_access_log`) | 裸 `open("...", "a")` 未 close，句柄泄漏 | 使用 `with open(...) as f:` 上下文管理器封装 | **资源安全释放**，避免高并发锁死 |
 | **最高价查询** (`get_most_expensive_item`) | 空购物车调用 `max()` 触发 `ValueError: empty sequence` | 空列表防御，直接返回 `None` 保护 | **防御式编程**，向后兼容调用方 |
 | **批量结算容错** (`batch_checkout_users`) | 裸 `except:` 吞没系统中断 | 校验 `0.0 <= ratio <= 1.0` 并精准捕获具体异常 | **精准异常处理**，消除隐蔽故障 |
-            """)
+                """)
 
-        refactored = st.session_state.get("refactored_code")
-        if not refactored and "shopping_cart" in st.session_state.get("active_file_name", ""):
-            refactored = DEFAULT_REFACTORED_SHOPPING_CART
-            st.session_state.refactored_code = refactored
-
-        if refactored:
-            # 采纳与还原按钮 (Cursor 风格交互)
-            diff_btn_col1, diff_btn_col2, _ = st.columns([1.8, 1.8, 2.4])
-            with diff_btn_col1:
-                if st.button("✅ 采纳并应用修改 (Accept)", type="primary", use_container_width=True):
-                    st.session_state.active_code = refactored
-                    st.toast("已采纳 AI 重构代码并覆盖至主编辑器！", icon="🎉")
-                    st.rerun()
-            with diff_btn_col2:
-                if st.button("↩️ 还原为基准代码 (Revert)", use_container_width=True):
-                    st.session_state.active_code = st.session_state.baseline_code
-                    st.toast("已还原至初始基准代码！", icon="↩️")
-                    st.rerun()
-
-            diff_mode = st.radio("对比呈现方式", ["并排对比 (Side-by-Side)", "Git 统一增量 (Unified Diff)"], horizontal=True)
             if diff_mode == "并排对比 (Side-by-Side)":
                 d_col1, d_col2 = st.columns(2)
                 with d_col1:
@@ -875,11 +875,10 @@ with col_editor:
                 else:
                     st.info("当前基线代码与重构代码完全一致，无增量差异。")
         else:
-            st.info("💡 尚未生成重构代码。请在左侧输入 `/refactor` 或点击右上角【✨ 一键重构】按钮，智能体将在此生成完整的代码对比！")
+            st.info("💡 尚未生成重构代码。请在左侧输入 `/refactor` 或点击上方【✨ 一键重构】按钮生成！")
 
     # ===== Tab 3: 沙箱终端 (Terminal & Test) =====
     with tab_terminal:
-        st.caption("基于独立子进程沙箱执行的 Python / Pytest 真实环境控制台反馈。")
         t_output = st.session_state.get("test_sandbox_output", "")
         if t_output:
             st.markdown(f'<div class="terminal-window">>_ 沙箱执行输出：\n\n{t_output}</div>', unsafe_allow_html=True)
@@ -895,7 +894,6 @@ with col_editor:
 
     # ===== Tab 4: 缺陷诊断清单 (Problems) =====
     with tab_problems:
-        st.caption("综合 AST 静态扫描初筛与专家 Agent 审计报告，定位深层逻辑漏洞。")
         issues = rule_res.get("issues", [])
         if issues:
             st.markdown(f"**检出 {len(issues)} 处潜在静态风险与坏味道：**")

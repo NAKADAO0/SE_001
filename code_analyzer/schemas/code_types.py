@@ -1,6 +1,5 @@
 """
 领域强类型数据模型：定义代码审查、测试执行、复杂度与重构的数据契约。
-参考 ruanfu_sheng/risk_analyzer/wiki/schemas 设计。
 """
 
 from enum import Enum

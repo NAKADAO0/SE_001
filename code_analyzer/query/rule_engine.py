@@ -1,6 +1,5 @@
 """
 静态规则引擎 (RuleEngine)：通过 AST 遍历与特征扫描进行零 LLM 的 Phase 1 快速代码分析。
-参考 ruanfu_sheng/risk_analyzer/wiki/query/rule_engine.py 设计。
 """
 
 import ast

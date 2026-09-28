@@ -1,6 +1,6 @@
 # 🤖 CodeMate-Agent 项目架构与多智能体协作指南 (AGENTS.md)
 
-本文件适用于本工程全部模块。参考工业级大型智能系统工程架构（ruanfu_sheng）制定，**核心底层全面采用主流 Agent 框架 LangChain (`langchain-core`, `langchain-openai`) 驱动**。
+本文件适用于本工程全部模块。参考工业级企业智能系统工程架构制定，**核心底层全面采用主流 Agent 框架 LangChain (`langchain-core`, `langchain-openai`) 驱动**。
 
 ---
 

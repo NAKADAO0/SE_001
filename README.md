@@ -7,7 +7,7 @@
 [![Backend](https://img.shields.io/badge/Backend-FastAPI-teal.svg)]()
 [![Tests](https://img.shields.io/badge/tests-32%20passed-brightgreen.svg)]()
 
-> **CodeMate-Agent** 是参考大型工业级智能体系统（`ruanfu_sheng`）架构规范深度打造的代码助手智能体系统。系统采用 **两阶段编排流水线 (Two-Phase Pipeline)** + **垂直领域多 Agent 专家矩阵 (Multi-Agent Team)** 范式，原生适配 **DeepSeek (默认 deepseek-flash)** 与 OpenAI API，融合了**代码审查、逻辑解释、单元测试自动生成与沙箱验证、架构设计模式重构**四大核心能力，支持微服务化解耦部署与一键运维。
+> **CodeMate-Agent** 是参考大型工业级智能体系统架构规范深度打造的代码助手智能体系统。系统采用 **两阶段编排流水线 (Two-Phase Pipeline)** + **垂直领域多 Agent 专家矩阵 (Multi-Agent Team)** 范式，原生适配 **DeepSeek (默认 deepseek-flash)** 与 OpenAI API，融合了**代码审查、逻辑解释、单元测试自动生成与沙箱验证、架构设计模式重构**四大核心能力，支持微服务化解耦部署与一键运维。
 
 ---
 
@@ -18,10 +18,10 @@ SoftEngineeing/
 ├── backend/                       # RESTful 微服务层 (FastAPI)
 │   ├── app.py                     # API 服务主入口 (提供 /review, /test, /refactor, /explain 等路由)
 │   └── schemas.py                 # Pydantic 强类型请求与响应契约
-├── code_analyzer/                 # 核心分析与多智能体引擎 (对标 ruanfu_sheng/risk_analyzer)
+├── code_analyzer/                 # 核心分析与多智能体引擎
 │   ├── core/                      # 基础核心模块
 │   │   ├── config.py              # 配置中心 (优先加载 deepseek-flash)
-│   │   ├── llm_client.py          # LLM 客户端 (带 Tenacity 指数退避重试)
+│   │   ├── llm_client.py          # LLM 客户端 (基于 LangChain + Tenacity 指数退避重试)
 │   │   └── memory.py              # 上下文记忆与滑动窗口
 │   ├── schemas/                   # 领域数据实体模型
 │   │   └── code_types.py          # ReviewReport, BugItem, TestExecutionResult, RefactorPlan
@@ -29,19 +29,19 @@ SoftEngineeing/
 │   │   ├── pipeline.py            # 两阶段核心流水线编排器 (Phase 1 规则初筛 -> Phase 2 Agent 分发 -> Verifier)
 │   │   ├── rule_engine.py         # 静态语法规则与 AST 异味引擎
 │   │   └── verifier.py            # 结果交叉校验与去重聚合器
-│   ├── agents/                    # 垂直领域多 Agent 专家矩阵 (对标 ruanfu_sheng/query/agents)
-│   │   ├── base_agent.py          # 智能体基类 (ReAct 循环、Tool 分发与观察者模式)
+│   ├── agents/                    # 垂直领域多 Agent 专家矩阵
+│   │   ├── base_agent.py          # 智能体基类 (LangChain 驱动 ReAct 循环、Tool 分发与观察者模式)
 │   │   ├── reviewer_agent.py      # Agent 1: 代码质量与安全审计专家
 │   │   ├── explainer_agent.py     # Agent 2: 逻辑解构与时空复杂度专家
 │   │   ├── tester_agent.py        # Agent 3: 单元测试自动生成与执行验证专家 (自纠错闭环)
 │   │   └── refactor_agent.py      # Agent 4: 架构坏味道消除与设计模式重构专家
 │   └── tools/                     # 工具层
-│       ├── registry.py            # 工具注册表 (@tool 装饰器、JSON Schema 反射)
+│       ├── registry.py            # 工具注册表 (@tool 装饰器、JSON Schema 反射、LangChain StructuredTool)
 │       ├── file_tools.py          # 文件工具集 (read_file, write_file, list_directory)
 │       └── exec_tools.py          # 隔离执行沙箱 (execute_python_code, run_pytest，带超时防死循环)
 ├── frontend/                      # 现代化前端界面
 │   └── web_app.py                 # 交互式 Web 控制台
-├── tests/                         # 全面自动化测试套件 (32 个用例全部通过)
+├── tests/                         # 全面自动化测试套件
 │   ├── test_pipeline.py           # 两阶段流水线与规则引擎测试
 │   ├── test_agent.py              # Agent ReAct 循环测试 (Mock LLM)
 │   ├── test_tools.py              # 6 个核心工具单元测试
@@ -51,9 +51,9 @@ SoftEngineeing/
 │   ├── demo_shopping_cart.py      # 电商购物车与结算模块 (涵盖除零、句柄泄露、空车崩溃等典型缺陷)
 │   ├── buggy_code.py              # 缺陷样例
 │   └── math_utils.py              # 算法样例
-├── start_all.bat                  # 一键启动全部微服务 (对标 ruanfu_sheng/start_all.bat)
-├── kill_all.bat                   # 一键停止全部后台服务 (对标 ruanfu_sheng/kill_all.bat)
-├── AGENTS.md                      # 多智能体架构约定与端口清单 (对标 ruanfu_sheng/AGENTS.md)
+├── start_all.bat                  # 一键启动全部微服务
+├── kill_all.bat                   # 一键停止全部后台服务
+├── AGENTS.md                      # 多智能体架构约定与端口清单
 ├── docs/                          # 规范工程文档
 │   ├── api_spec.md                # RESTful API 接口规范
 │   └── plans/                     # 实施计划与架构演进稿

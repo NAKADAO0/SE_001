@@ -1,6 +1,5 @@
 """
 结果校验与去重聚合器 (Verifier & Dedup)
-参考 ruanfu_sheng/risk_analyzer/wiki/query/verifier.py 设计。
 """
 
 from typing import List

@@ -1,6 +1,6 @@
 """
 核心两阶段分析流水线 (Two-Phase Code Pipeline)
-参考 ruanfu_sheng/risk_analyzer/wiki/query/pipeline.py 设计。
+企业级智能代码多阶段协同编排设计。
 
 架构流程：
 Phase 1: 零 LLM 共享特征抽取与 AST 规则初筛 (RuleEngine)

@@ -1,6 +1,6 @@
 """
 后端 RESTful API 服务器 (FastAPI)
-参考 ruanfu_sheng/backend 与 ruanfu_sheng/risk_analyzer 路由架构。
+企业级微服务 RESTful API 路由架构。
 """
 
 import sys
