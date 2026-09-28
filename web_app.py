@@ -185,8 +185,8 @@ def extract_best_refactored_code(answer: str, original_code: str) -> Optional[st
 
 
 st.set_page_config(
-    page_title="CodeMate AI IDE | 智能代码工作台",
-    page_icon="💻",
+    page_title="CodeReviewerAgent | 智能代码审查与质量分析工作台",
+    page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -559,7 +559,19 @@ if "refactored_code" not in st.session_state:
 
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = [
-        {"role": "assistant", "content": "你好！我是你的 AI Copilot 智能体。右侧为主体代码工作区。你可以在下方直接输入自然语言需求（例如“修复除零和未关文件Bug”），或输入 `/` 呼出 4 个专家命令（`/review`, `/refactor`, `/test`, `/explain`），我将在右侧代码区实时反馈重构与 Diff！"}
+        {
+            "role": "assistant",
+            "content": (
+                "👋 **你好！我是基于主流框架 LangChain 驱动的专业代码审查智能体 (CodeReviewerAgent)**。\n\n"
+                "🎯 **核心使命**：深入分析代码质量、排查隐蔽运行时崩溃风险与漏洞、输出高质量整改建议。\n\n"
+                "🔄 **Agent 执行闭环 (ReAct 循环)**：\n"
+                "- 📥 **输入 (Input)**：接收目标源码与审查指令；\n"
+                "- 🧠 **推理 (Reasoning)**：制定审计计划，分析潜在风险点；\n"
+                "- ⚡ **工具调用 (Tools)**：自主调度 `read_file`、`lint_code` (AST代码解析) 与 `execute_python_code` (沙箱运行)；\n"
+                "- 💡 **成果输出 (Output)**：生成结构化缺陷诊断大屏与一键可采纳的修复建议！\n\n"
+                "👉 *点击下方快捷胶囊按钮或直接输入自然语言指令，即刻启动全量安全审查！*"
+            )
+        }
     ]
 
 if "thought_steps" not in st.session_state:
@@ -577,8 +589,9 @@ active_lines = len(st.session_state.active_code.splitlines())
 st.markdown(f"""
 <div class="ide-header">
     <div class="ide-title-box">
-        <span class="ide-title">💻 CodeMate AI IDE</span>
-        <span class="ide-badge">LangChain 驱动</span>
+        <span class="ide-title">🛡️ CodeReviewerAgent 工作台</span>
+        <span class="ide-badge">LangChain Core 驱动</span>
+        <span class="ide-badge" style="background: #059669;">ReAct 闭环循环</span>
     </div>
     <div class="ide-meta-box">
         <div class="ide-meta-item">
@@ -586,12 +599,12 @@ st.markdown(f"""
             <span class="context-pill">📄 {st.session_state.get('active_file_name', 'untitled.py')} ({active_lines} 行)</span>
         </div>
         <div class="ide-meta-item">
-            <span>LLM:</span>
+            <span>推理模型:</span>
             <strong style="color: #38bdf8;">{st.session_state.config.model_name}</strong>
         </div>
         <div class="ide-meta-item">
-            <span>后端状态:</span>
-            <span style="color: #4ade80;">● FastAPI :8000 在线</span>
+            <span>循环链路:</span>
+            <span style="color: #fbbf24; font-family: monospace;">输入 ➔ 推理 ➔ 工具 ➔ 输出</span>
         </div>
     </div>
 </div>
@@ -656,27 +669,27 @@ col_agent, col_editor = st.columns([3.2, 6.8], gap="medium")
 with col_agent:
     st.markdown("#### 🤖 AI Copilot 助手")
 
-    # 辅助函数：格式化思考步骤
+    # 辅助函数：格式化思考步骤 (严格契合 Agent 循环：输入 → 推理 → 工具调用 → 输出)
     def format_step_badge(step: Dict[str, Any]) -> str:
         s_type = step.get("type")
         if s_type == "pipeline_start":
-            return f"🚀 **流水线启动**: 分析代码规模 {step.get('lines', 0)} 行"
+            return f"📥 **[Agent 循环 1/4 · 输入 Input]**: 接收目标源码 ({step.get('lines', 0)} 行)"
         elif s_type == "phase1_complete":
             issues_cnt = step.get("initial_issues_count", 0)
-            return f"🔍 **[Phase 1] 静态 AST 规则扫描**: 检出 **{issues_cnt}** 处潜在风险线索 (函数 {len(step.get('functions', []))} 个，类 {len(step.get('classes', []))} 个)"
+            return f"🔍 **[代码解析 · 静态 AST 扫描]**: 初筛锁定 **{issues_cnt}** 处潜在风险线索 (函数 {len(step.get('functions', []))} 个)"
         elif s_type == "phase2_dispatch":
-            return f"🤖 **[Phase 2] 专家就位**: 任务分配给 `{step.get('agent', '专家 Agent')}`"
+            return f"🤖 **[专家智能体调度]**: 任务委派给 `{step.get('agent', 'CodeReviewerAgent')}`"
         elif s_type == "agent_start":
-            return f"🧠 **[模型推理启动]**: {step.get('agent_name', 'Agent')} 制定执行方案"
+            return f"🧠 **[Agent 循环 2/4 · 推理 Reasoning]**: {step.get('agent_name', 'CodeReviewerAgent')} 深入分析代码质量与潜在Bug"
         elif s_type == "call":
-            return f"⚡ **[第 {step.get('iteration', 1)} 轮推理] 工具调用**: `{step.get('tool')}`"
+            return f"⚡ **[Agent 循环 3/4 · 工具调用 Tool Call]**: 第 {step.get('iteration', 1)} 轮自主调度 LangChain 工具 `{step.get('tool')}`"
         elif s_type == "result":
             status_text = "✅ 沙箱执行成功" if step.get("success") else "❌ 执行报错/异常"
-            return f"📋 **沙箱执行反馈**: {status_text} (工具 `{step.get('tool')}`)"
+            return f"📋 **[Agent 循环 3/4 · 环境观察 Observation]**: {status_text} (工具 `{step.get('tool')}`)"
         elif s_type == "agent_finish":
-            return f"💡 **[专家推理完成]**: 历经 {step.get('iterations', 1)} 轮思考，方案提炼完毕"
+            return f"💡 **[Agent 循环 4/4 · 推理收敛]**: 历经 {step.get('iterations', 1)} 轮 ReAct 思考，整改建议生成完毕"
         elif s_type == "pipeline_finish":
-            return f"✔ **[Phase 3] 校验完成**: 最终结果聚合"
+            return f"✔ **[成果输出 Output]**: 代码质量评估与缺陷看板聚合就绪"
         return f"● {step.get('title', '处理中')}"
 
     # 对话流容器 (高度拉满至 600px，极致清爽的沉浸式对话)

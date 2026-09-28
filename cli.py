@@ -32,10 +32,12 @@ console = Console()
 def print_banner(config: Config):
     """打印彩色启动横幅"""
     banner_text = (
-        "[bold cyan]╔═══════════════════════════════════════════════════════════════╗[/bold cyan]\n"
-        "[bold cyan]║[/bold cyan]      [bold green]🤖 CodeMate-Agent | 全能智能代码助手系统[/bold green]                [bold cyan]║[/bold cyan]\n"
-        "[bold cyan]║[/bold cyan]   [yellow]ReAct 循环[/yellow] • [magenta]工具自主调度[/magenta] • [blue]多轮记忆追踪[/blue] • [red]执行自纠错[/red]       [bold cyan]║[/bold cyan]\n"
-        "[bold cyan]╚═══════════════════════════════════════════════════════════════╝[/bold cyan]"
+        "[bold cyan]╔═══════════════════════════════════════════════════════════════════════╗[/bold cyan]\n"
+        "[bold cyan]║[/bold cyan]      [bold green]🤖 CodeReviewerAgent | 智能代码审查与质量分析助手[/bold green]                [bold cyan]║[/bold cyan]\n"
+        "[bold cyan]║[/bold cyan]   [yellow]核心定位[/yellow]: 分析代码质量 • 发现潜在Bug • 给出改进建议                  [bold cyan]║[/bold cyan]\n"
+        "[bold cyan]║[/bold cyan]   [magenta]Agent 循环[/magenta]: 输入 ➔ 推理 (Reasoning) ➔ 工具调用 ➔ 审查输出          [bold cyan]║[/bold cyan]\n"
+        "[bold cyan]║[/bold cyan]   [blue]主流框架[/blue]: LangChain Core • DeepSeek 推理 • 上下文记忆 • 工具沙箱     [bold cyan]║[/bold cyan]\n"
+        "[bold cyan]╚═══════════════════════════════════════════════════════════════════════╝[/bold cyan]"
     )
     console.print(banner_text)
     
@@ -48,12 +50,14 @@ def print_banner(config: Config):
     info_table = Table.grid(padding=(0, 2))
     info_table.add_column(style="bold yellow")
     info_table.add_column()
-    info_table.add_row("目标模型:", f"[bold white]{config.model_name}[/bold white]")
-    info_table.add_row("API 节点:", f"[cyan]{config.base_url}[/cyan]")
+    info_table.add_row("核心 Agent:", "[bold green]CodeReviewerAgent (代码审查专家)[/bold green]")
+    info_table.add_row("驱动模型:", f"[bold white]{config.model_name}[/bold white] (带指数退避重试)")
+    info_table.add_row("Agent 循环:", "[cyan]输入 ➔ 推理 ➔ 工具调用 ➔ 观察 ➔ 输出[/cyan]")
+    info_table.add_row("记忆系统:", "[magenta]LangChain BaseMessage 消息栈多轮会话记忆[/magenta]")
     info_table.add_row("凭证状态:", key_status)
-    info_table.add_row("快捷命令:", "[dim]/mode <模式>, /tools, /clear, /help, /exit[/dim]")
+    info_table.add_row("快捷命令:", "[dim]/tools (查看工具), /clear (重置记忆), /help, /exit[/dim]")
     
-    console.print(Panel(info_table, title="[bold]环境与运行信息[/bold]", border_style="blue"))
+    console.print(Panel(info_table, title="[bold]代码审查 Agent 架构与运行状态[/bold]", border_style="blue"))
 
 
 def show_tools(agent: CodeMateAgent):
@@ -136,9 +140,10 @@ def main():
             os.environ["DEEPSEEK_API_KEY"] = config.api_key
 
     agent = CodeMateAgent(config=config)
+    agent.switch_mode("review")
     on_step_cb = make_step_callback()
 
-    console.print("\n[bold green]Ready! 请输入您的代码任务（输入 /help 查看指引，输入 /exit 退出）：[/bold green]\n")
+    console.print("\n[bold green]Ready! CodeReviewerAgent 审查专家已就绪。请输入审查需求或代码路径（如 '审查 samples/demo_shopping_cart.py'，输入 /help 查看指引，输入 /exit 退出）：[/bold green]\n")
 
     while True:
         try:
