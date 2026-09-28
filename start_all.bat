@@ -44,7 +44,7 @@ timeout /t 2 /nobreak >nul
 
 :: ---- 3. 启动 Streamlit 前端交互工作台 (Port 8501) ----
 echo [3/3] 启动 Streamlit 可视化交互工作台 (Port 8501)...
-start "CodeMate-Streamlit-8501" /D "%~dp0" cmd /k ""%PY_EXE%" -m streamlit run web_app.py --server.port 8501"
+start "CodeMate-Streamlit-8501" /D "%~dp0" cmd /k ""%PY_EXE%" -m streamlit run web_app.py --server.port 8501 --server.runOnSave true"
 
 echo.
 echo ====================================================

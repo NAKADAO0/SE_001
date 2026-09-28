@@ -1,0 +1,9 @@
+[server]
+# 开启文件修改自动热重载 (Hot Reloading / Auto-rerun on save)
+runOnSave = true
+port = 8501
+headless = true
+fileWatcherType = "auto"
+
+[browser]
+gatherUsageStats = false
