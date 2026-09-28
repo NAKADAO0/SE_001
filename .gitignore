@@ -50,3 +50,4 @@ ENV/
 
 # 临时文件
 ~$*
+_demo_log.txt

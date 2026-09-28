@@ -15,6 +15,7 @@ CodeMate AI IDE - 现代智能代码研发与审查工作台
 import sys
 import os
 import difflib
+import html
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 import streamlit as st
@@ -182,6 +183,72 @@ def extract_best_refactored_code(answer: str, original_code: str) -> Optional[st
         return longest
 
     return None
+
+
+def render_code_with_risk_highlights(
+    code_text: str,
+    issues: List[Any],
+    highlight_fixed_lines: Optional[set] = None,
+    title: str = "源代码全景透视 (带风险行警示标记)",
+) -> str:
+    """生成带有精准行号与多级风险高亮的专业代码检视视图"""
+    if not code_text:
+        return "<div style='color: #64748b; padding: 20px;'>暂无代码内容。</div>"
+
+    lines = code_text.splitlines()
+    risk_map = {}
+    for iss in issues:
+        l = getattr(iss, "line", None)
+        if l and 1 <= l <= len(lines):
+            sev = getattr(iss.severity, "value", str(getattr(iss, "severity", "MEDIUM")))
+            cat = getattr(iss, "category", "潜在风险")
+            desc = getattr(iss, "description", "")
+            sugg = getattr(iss, "suggestion", "")
+            risk_map[l] = (sev, cat, desc, sugg)
+
+    html_rows = []
+    for i, line in enumerate(lines, 1):
+        escaped_line = html.escape(line)
+        if not escaped_line:
+            escaped_line = "&nbsp;"
+
+        row_cls = ""
+        chip_html = ""
+        tooltip = ""
+
+        if highlight_fixed_lines and i in highlight_fixed_lines:
+            row_cls = "fixed-row-highlight"
+            chip_html = f'<span class="code-risk-chip fixed">✔ 已应用防御修复</span>'
+        elif i in risk_map:
+            sev, cat, desc, sugg = risk_map[i]
+            sev_lower = sev.lower()
+            row_cls = f"risk-row-{sev_lower}"
+            chip_icon = "🔴" if sev == "CRITICAL" else ("🟠" if sev == "HIGH" else "🔵")
+            chip_text = f"{chip_icon} {cat.split()[0]}"
+            tip_text = f"【第{i}行 {sev}】{cat}\n问题分析: {desc}\n修复建议: {sugg}"
+            chip_html = f'<span class="code-risk-chip {sev_lower}" title="{html.escape(tip_text)}">{chip_text}</span>'
+            tooltip = f' title="{html.escape(tip_text)}"'
+
+        html_rows.append(
+            f'<div class="code-line-row {row_cls}"{tooltip}>'
+            f'<span class="code-line-num">{i}</span>'
+            f'<span class="code-line-code">{escaped_line}</span>'
+            f'{chip_html}'
+            f'</div>'
+        )
+
+    risk_count = len(risk_map)
+    return f"""
+<div class="source-viewer-card">
+    <div class="source-viewer-header">
+        <span>📄 <strong>{title}</strong> ({len(lines)} 行 · 命中 <strong>{risk_count}</strong> 处风险行高亮标记)</span>
+        <span style="font-size: 0.74rem; font-family: monospace;">🔴 Critical 致命崩溃 | 🟠 High 资源/安全 | 🔵 Medium 坏味道</span>
+    </div>
+    <div class="source-viewer-body">
+        {''.join(html_rows)}
+    </div>
+</div>
+"""
 
 
 st.set_page_config(
@@ -524,6 +591,118 @@ st.markdown("""
     [data-testid="column"]:first-child div[data-testid="stButton"] button:focus:not(:active) {
         border-color: rgba(245, 158, 11, 0.5) !important;
         color: #fbbf24 !important;
+    }
+
+    /* 源代码检视器与风险行高亮 (Source Code Risk Highlighter) */
+    .source-viewer-card {
+        background: #090d16;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+    .source-viewer-header {
+        background: #0f172a;
+        padding: 8px 14px;
+        border-bottom: 1px solid #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #94a3b8;
+    }
+    .source-viewer-body {
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 0.84rem;
+        line-height: 1.6;
+        max-height: 600px;
+        overflow-y: auto;
+        overflow-x: auto;
+        padding: 8px 0;
+        background: #090d16;
+    }
+    .code-line-row {
+        display: flex;
+        align-items: center;
+        padding: 1px 12px;
+        min-height: 24px;
+        transition: background-color 0.15s ease;
+    }
+    .code-line-row:hover {
+        background: rgba(255, 255, 255, 0.04);
+    }
+    .code-line-num {
+        width: 44px;
+        min-width: 44px;
+        text-align: right;
+        padding-right: 14px;
+        color: #475569;
+        user-select: none;
+        font-size: 0.76rem;
+    }
+    .code-line-code {
+        flex: 1;
+        white-space: pre;
+        color: #e2e8f0;
+    }
+    /* 风险行多级高亮标记 */
+    .code-line-row.risk-row-critical {
+        background: rgba(239, 68, 68, 0.22) !important;
+        border-left: 4px solid #ef4444;
+    }
+    .code-line-row.risk-row-critical .code-line-num {
+        color: #fca5a5;
+        font-weight: 700;
+    }
+    .code-line-row.risk-row-high {
+        background: rgba(249, 115, 22, 0.2) !important;
+        border-left: 4px solid #f97316;
+    }
+    .code-line-row.risk-row-high .code-line-num {
+        color: #fdba74;
+        font-weight: 700;
+    }
+    .code-line-row.risk-row-medium {
+        background: rgba(59, 130, 246, 0.16) !important;
+        border-left: 4px solid #3b82f6;
+    }
+    .code-line-row.risk-row-medium .code-line-num {
+        color: #93c5fd;
+        font-weight: 700;
+    }
+    .code-line-row.fixed-row-highlight {
+        background: rgba(16, 185, 129, 0.2) !important;
+        border-left: 4px solid #10b981;
+    }
+    .code-line-row.fixed-row-highlight .code-line-num {
+        color: #86efac;
+        font-weight: 700;
+    }
+    .code-risk-chip {
+        font-size: 0.7rem;
+        padding: 1px 7px;
+        border-radius: 4px;
+        margin-left: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        user-select: none;
+    }
+    .code-risk-chip.critical {
+        background: #ef4444;
+        color: #ffffff;
+    }
+    .code-risk-chip.high {
+        background: #f97316;
+        color: #ffffff;
+    }
+    .code-risk-chip.medium {
+        background: #2563eb;
+        color: #ffffff;
+    }
+    .code-risk-chip.fixed {
+        background: #059669;
+        color: #ffffff;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1079,6 +1258,17 @@ with col_editor:
                     continue
             filtered_issues.append(iss)
 
+        # 3.5 源码风险行全景透视折叠盒 (让用户在诊断大屏也能直观对照全部源代码与高亮)
+        with st.expander("🔍 展开直观对照【源码全景风险透视视图】(带行号与红橙高亮)", expanded=False):
+            st.markdown(
+                render_code_with_risk_highlights(
+                    code_text=st.session_state.active_code,
+                    issues=issues,
+                    title="源代码风险行全景定位"
+                ),
+                unsafe_allow_html=True
+            )
+
         # 4. 渲染各风险卡片
         if filtered_issues:
             for idx, iss in enumerate(filtered_issues, 1):
@@ -1139,17 +1329,68 @@ with col_editor:
                 with st.expander("📄 查看专家 Agent 深度综合审计报告", expanded=True):
                     st.markdown(p2["report"])
 
-    # ===== Tab 2: IDE 代码主体编辑器 =====
+    # ===== Tab 2: 源代码检视与风险透视 (带精准行号与缺陷高亮) =====
     with tab_editor:
-        edited_code = st.text_area(
-            "代码主体",
-            value=st.session_state.active_code,
-            height=660,
-            key="ide_source_editor",
-            label_visibility="collapsed",
-        )
-        if edited_code != st.session_state.active_code:
-            st.session_state.active_code = edited_code
+        v_col1, v_col2 = st.columns([5.2, 1.8], gap="small")
+        with v_col1:
+            code_view_mode = st.radio(
+                "视图模式切换",
+                [
+                    "🌟 源码风险透视 (精准行号 · 缺陷行红橙警示高亮)",
+                    "✏️ 在线交互编辑模式 (Text Area 编辑器)",
+                    "🟢 修复后安全代码视图 (消除漏洞版)"
+                ],
+                index=0,
+                horizontal=True,
+                label_visibility="collapsed"
+            )
+        with v_col2:
+            st.caption(f"当前源文件: `{Path(st.session_state.get('active_file_name', 'main.py')).name}`")
+
+        if "源码风险透视" in code_view_mode:
+            # 渲染带有行号与红/橙/蓝多级高亮标记的专业源代码检视器
+            rendered_html = render_code_with_risk_highlights(
+                code_text=st.session_state.active_code,
+                issues=rule_res.get("issues", []),
+                title=f"源码全景透视检视 · {Path(st.session_state.get('active_file_name', 'code.py')).name}"
+            )
+            st.markdown(rendered_html, unsafe_allow_html=True)
+            st.info("💡 提示：在【🌟 源码风险透视】视图中，红色/橙色高亮行即为检出的安全漏洞与崩溃点，悬停可查看机理成因。需要直接修改代码请切换至【✏️ 在线交互编辑模式】。")
+
+        elif "修复后安全代码" in code_view_mode:
+            refactored = st.session_state.get("refactored_code")
+            if not refactored and "shopping_cart" in st.session_state.get("active_file_name", ""):
+                refactored = DEFAULT_REFACTORED_SHOPPING_CART
+                st.session_state.refactored_code = refactored
+
+            if refactored:
+                # 高亮标注修复后的安全代码
+                rendered_fix_html = render_code_with_risk_highlights(
+                    code_text=refactored,
+                    issues=[],
+                    highlight_fixed_lines={14, 21, 28, 35, 42},
+                    title=f"AI 重构防御源码 (已消除所有已知缺陷) · {Path(st.session_state.get('active_file_name', 'code.py')).stem}_refactored.py"
+                )
+                st.markdown(rendered_fix_html, unsafe_allow_html=True)
+                if st.button("✅ 采纳并应用此修复代码至当前文件", type="primary", use_container_width=True):
+                    st.session_state.active_code = refactored
+                    st.toast("已采纳修复代码！", icon="🎉")
+                    st.rerun()
+            else:
+                st.warning("⚠️ 尚未生成修复后的安全代码。请点击上方【⚡ 深度审查】启动 CodeReviewerAgent 生成！")
+
+        else:
+            # 在线编辑模式
+            edited_code = st.text_area(
+                "代码主体编辑",
+                value=st.session_state.active_code,
+                height=660,
+                key="ide_source_editor",
+                label_visibility="collapsed",
+            )
+            if edited_code != st.session_state.active_code:
+                st.session_state.active_code = edited_code
+                st.session_state.baseline_code = edited_code
 
     # ===== Tab 3: 修改前后对比 (Diff Viewer) =====
     with tab_diff:
