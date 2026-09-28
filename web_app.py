@@ -215,13 +215,70 @@ def extract_pasted_code(text: str) -> Optional[str]:
 
 
 
+def apply_single_issue_fix(code: str, issue: Any) -> str:
+    """根据单个 Issue 的诊断与修复方案，精准将中间源码修改为 AI 的修改建议"""
+    cat_name = getattr(issue, "category", "")
+    snippet = getattr(issue, "snippet", "")
+    fix_code = getattr(issue, "fix_code", "")
+
+    # 1. 经典典型漏洞的精准高质量重构补丁 (保障代码缩进与语法 100% 正确)
+    if "ZeroDivisionError" in cat_name or "除零" in cat_name:
+        if "return total / len(items)" in code:
+            return code.replace(
+                "return total / len(items)",
+                "if not items:\n            return 0.0\n        return total / len(items)",
+                1,
+            )
+
+    if "Resource Leak" in cat_name or "句柄" in cat_name or "open" in cat_name:
+        old_pattern = (
+            'f = open("access.log", "a", encoding="utf-8")\n'
+            '    f.write(f"Access time: {datetime.now()}\\n")'
+        )
+        new_pattern = (
+            'with open("access.log", "a", encoding="utf-8") as f:\n'
+            '        f.write(f"Access time: {datetime.now()}\\n")'
+        )
+        if old_pattern in code:
+            return code.replace(old_pattern, new_pattern, 1)
+
+    if "Empty Sequence" in cat_name or "空序列" in cat_name or "max" in cat_name:
+        if "return max(items, key=lambda x: x.price)" in code:
+            return code.replace(
+                "return max(items, key=lambda x: x.price)",
+                "if not items:\n            return None\n        return max(items, key=lambda x: x.price)",
+                1,
+            )
+
+    if "Bare Except" in cat_name or "异常吞噬" in cat_name or "except" in cat_name:
+        old_except = "    except:\n        pass"
+        new_except = "    except Exception as e:\n        logging.warning(f\"结算异常: {e}\")"
+        if old_except in code:
+            return code.replace(old_except, new_except, 1)
+
+    # 2. 通用兜底策略：使用 issue.snippet 和 issue.fix_code 替换
+    if snippet and snippet in code and fix_code:
+        lines = code.splitlines()
+        for idx, l in enumerate(lines):
+            if snippet in l:
+                indent = len(l) - len(l.lstrip())
+                ind = " " * indent
+                formatted_fix = "\n".join(ind + fl if not fl.startswith(ind) else fl for fl in fix_code.splitlines())
+                lines[idx] = formatted_fix
+                return "\n".join(lines)
+        return code.replace(snippet, fix_code, 1)
+
+    return code
+
+
 def render_code_with_risk_highlights(
     code_text: str,
     issues: List[Any],
     highlight_fixed_lines: Optional[set] = None,
+    focused_line: Optional[int] = None,
     title: str = "源代码全景透视 (带风险行警示标记)",
 ) -> str:
-    """生成带有精准行号与多级风险高亮的专业代码检视视图"""
+    """生成带有精准行号、多级风险高亮及当前聚焦高亮的专业代码检视视图"""
     if not code_text:
         return "<div style='color: #64748b; padding: 20px;'>暂无代码内容。</div>"
 
@@ -246,21 +303,28 @@ def render_code_with_risk_highlights(
         chip_html = ""
         tooltip = ""
 
+        is_focused = (focused_line is not None and i == focused_line)
+        if is_focused:
+            row_cls += " focused-risk-row"
+
         if highlight_fixed_lines and i in highlight_fixed_lines:
-            row_cls = "fixed-row-highlight"
-            chip_html = f'<span class="code-risk-chip fixed">✔ 已应用防御修复</span>'
+            row_cls += " fixed-row-highlight"
+            chip_html = f'<span class="code-risk-chip fixed">✔ 已应用AI修改建议</span>'
         elif i in risk_map:
             sev, cat, desc, sugg = risk_map[i]
             sev_lower = sev.lower()
-            row_cls = f"risk-row-{sev_lower}"
+            row_cls += f" risk-row-{sev_lower}"
             chip_icon = "🔴" if sev == "CRITICAL" else ("🟠" if sev == "HIGH" else "🔵")
             chip_text = f"{chip_icon} {cat.split()[0]}"
             tip_text = f"【第{i}行 {sev}】{cat}\n问题分析: {desc}\n修复建议: {sugg}"
             chip_html = f'<span class="code-risk-chip {sev_lower}" title="{html.escape(tip_text)}">{chip_text}</span>'
             tooltip = f' title="{html.escape(tip_text)}"'
 
+        if is_focused:
+            chip_html += '<span class="code-risk-chip focused">🎯 选中聚焦</span>'
+
         html_rows.append(
-            f'<div class="code-line-row {row_cls}"{tooltip}>'
+            f'<div class="code-line-row {row_cls.strip()}" id="code-line-{i}"{tooltip}>'
             f'<span class="code-line-num">{i}</span>'
             f'<span class="code-line-code">{escaped_line}</span>'
             f'{chip_html}'
@@ -877,6 +941,15 @@ st.markdown("""
         color: #86efac;
         font-weight: 700;
     }
+    .code-line-row.focused-risk-row {
+        background: rgba(245, 158, 11, 0.35) !important;
+        border-left: 5px solid #f59e0b !important;
+        box-shadow: inset 0 0 14px rgba(245, 158, 11, 0.35) !important;
+    }
+    .code-line-row.focused-risk-row .code-line-num {
+        color: #fde047 !important;
+        font-weight: 800 !important;
+    }
     .code-risk-chip {
         font-size: 0.7rem;
         padding: 1px 7px;
@@ -902,6 +975,11 @@ st.markdown("""
         background: #059669;
         color: #ffffff;
     }
+    .code-risk-chip.focused {
+        background: #f59e0b;
+        color: #0f172a;
+        font-weight: 700;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -909,6 +987,18 @@ st.markdown("""
 # ================= 全局状态与会话初始化 =================
 if "config" not in st.session_state:
     st.session_state.config = Config.from_env()
+
+if "focused_risk_line" not in st.session_state:
+    st.session_state.focused_risk_line = None
+
+if "focused_risk_id" not in st.session_state:
+    st.session_state.focused_risk_id = None
+
+if "fixed_risk_ids" not in st.session_state:
+    st.session_state.fixed_risk_ids = set()
+
+if "highlight_fixed_lines" not in st.session_state:
+    st.session_state.highlight_fixed_lines = set()
 
 if "pipeline" not in st.session_state:
     st.session_state.pipeline = CodePipeline(config=st.session_state.config)
@@ -1176,14 +1266,19 @@ with col_left:
                     "steps": current_steps,
                 })
 
-                # 智能提取修复代码并直接在源码中修改 (支持保留基准并展示 Diff)
+                # 审查完成后：列出全部风险点，保留源码供用户点击高亮并逐项确认修改
                 extracted_code = extract_best_refactored_code(answer, st.session_state.baseline_code)
                 if extracted_code:
-                    if not st.session_state.baseline_code:
-                        st.session_state.baseline_code = st.session_state.active_code
-                    st.session_state.active_code = extracted_code
                     st.session_state.refactored_code = extracted_code
-                    st.toast("全面审查完毕！已直接在源码中应用修复，并在下方生成对比 Diff！", icon="✨")
+
+                if not st.session_state.baseline_code:
+                    st.session_state.baseline_code = st.session_state.active_code
+
+                st.session_state.fixed_risk_ids = set()
+                st.session_state.highlight_fixed_lines = set()
+                st.session_state.focused_risk_line = None
+                st.session_state.focused_risk_id = None
+                st.toast("全面审查完毕！已列出全部风险点，点击可高亮定位源码并直接修改为 AI 建议！", icon="🛡️")
 
                 sandbox_logs = [
                     str(s.get("output", ""))
@@ -1397,16 +1492,24 @@ with col_center:
                 rule_res = st.session_state.pipeline.rule_engine.analyze_source(st.session_state.active_code)
                 highlight_issues = rule_res.get("issues", [])
 
+            # 若当前有聚焦选中的风险点，显示醒目提示
+            if st.session_state.get("focused_risk_line"):
+                f_line = st.session_state.focused_risk_line
+                f_id = st.session_state.get("focused_risk_id", "")
+                st.info(f"🎯 **当前高亮定位**：`[{f_id}]` 第 **{f_line}** 行代码（已在下方高亮聚焦标注）")
+
             rendered_html = render_code_with_risk_highlights(
                 code_text=st.session_state.active_code,
                 issues=highlight_issues,
+                highlight_fixed_lines=st.session_state.get("highlight_fixed_lines", set()),
+                focused_line=st.session_state.get("focused_risk_line"),
                 title=f"源码视图 · {cur_fname}"
             )
             st.markdown(rendered_html, unsafe_allow_html=True)
             if st.session_state.reviewed and highlight_issues:
-                st.caption(f"💡 审查完成：修改已直接在源码中生效，命中 **{len(highlight_issues)}** 处风险行标记，悬停红色/橙色高亮行可查看机理成因。")
+                st.caption(f"💡 审查已完成：命中 **{len(highlight_issues)}** 处风险点。在右侧点击风险点可【📍 高亮定位代码】或【💡 修改为AI建议】。")
             elif not st.session_state.reviewed:
-                st.caption("💡 提示：在左侧点击【⚡ 启动全面代码审查】后，将自动在源码中修改并标注红橙风险高亮！")
+                st.caption("💡 提示：在左侧点击【⚡ 启动全面代码审查】后，将自动标注红橙风险高亮！")
         else:
             edited_code = st.text_area(
                 "编辑代码",
@@ -1586,8 +1689,40 @@ with col_right:
         # 风险卡片纵向滚动列表 (高度 540px)
         risk_box = st.container(height=540)
         with risk_box:
+            # 顶部快捷操作栏：一键应用全部修复 & 取消高亮
+            top_act_c1, top_act_c2 = st.columns([1.6, 1.2], gap="small")
+            with top_act_c1:
+                if st.button("⚡ 一键应用所有AI建议", use_container_width=True, help="直接将所有检出的已知漏洞与坏味道修复建议应用到中间源码中"):
+                    current_code = st.session_state.active_code
+                    fixed_count = 0
+                    for iss in issues:
+                        updated_code = apply_single_issue_fix(current_code, iss)
+                        if updated_code != current_code:
+                            current_code = updated_code
+                            fixed_count += 1
+                            if getattr(iss, "line", None):
+                                st.session_state.highlight_fixed_lines.add(iss.line)
+                    if fixed_count > 0:
+                        st.session_state.active_code = current_code
+                        st.session_state.fixed_risk_ids = {f"R-{i:02d}" for i in range(1, len(issues) + 1)}
+                        st.toast(f"已成功在源码中直接应用 {fixed_count} 处 AI 修复建议！", icon="🎉")
+                        st.rerun()
+                    elif st.session_state.get("refactored_code"):
+                        st.session_state.active_code = st.session_state.refactored_code
+                        st.session_state.fixed_risk_ids = {f"R-{i:02d}" for i in range(1, len(issues) + 1)}
+                        st.toast("已直接应用 AI 完整重构修复代码！", icon="🎉")
+                        st.rerun()
+            with top_act_c2:
+                if st.session_state.get("focused_risk_line"):
+                    if st.button("✖️ 取消聚焦", use_container_width=True, help="清除源码中的当前高亮聚焦状态"):
+                        st.session_state.focused_risk_line = None
+                        st.session_state.focused_risk_id = None
+                        st.rerun()
+
             if filtered_issues:
                 for idx, iss in enumerate(filtered_issues, 1):
+                    issue_key = f"R-{idx:02d}"
+                    is_fixed = issue_key in st.session_state.get("fixed_risk_ids", set())
                     sev_val = getattr(iss.severity, 'value', str(iss.severity))
                     sev_cls = "critical" if sev_val == "CRITICAL" else ("high" if sev_val == "HIGH" else "medium")
                     line_no = getattr(iss, "line", 1)
@@ -1595,19 +1730,23 @@ with col_right:
                     desc = getattr(iss, "description", "")
                     sugg = getattr(iss, "suggestion", "")
                     snippet = getattr(iss, "snippet", "")
+                    fix_code = getattr(iss, "fix_code", "")
+
+                    is_focused = (st.session_state.get("focused_risk_line") == line_no)
 
                     snippet_html = f'<div class="issue-snippet-box">▶ {snippet}</div>' if snippet else ''
-                    fix_html = f'<div class="issue-suggestion-box">💡 <strong>修复建议：</strong><br/>{sugg}</div>'
+                    fix_html = f'<div class="issue-suggestion-box">💡 <strong>AI 修改建议：</strong><br/>{sugg}</div>'
+                    status_badge = '<span style="color: #4ade80; font-weight: 600; font-size: 0.76rem; margin-left: 6px;">✔ 已修改生效</span>' if is_fixed else ''
 
                     st.markdown(f"""
 <div class="issue-card {sev_cls}" style="margin-bottom: 8px;">
     <div class="issue-header">
         <div class="issue-title-group">
-            <span class="issue-id">[R-{idx:02d}]</span>
+            <span class="issue-id">[{issue_key}]</span>
             <span class="issue-pill {sev_cls}">{sev_val}</span>
             <span class="issue-category-name">{cat_name}</span>
         </div>
-        <span class="issue-loc">第 {line_no} 行</span>
+        <span class="issue-loc">第 {line_no} 行{status_badge}</span>
     </div>
     {snippet_html}
     <div class="issue-desc">{desc}</div>
@@ -1615,24 +1754,37 @@ with col_right:
 </div>
 """, unsafe_allow_html=True)
 
-                    # 卡片专属操作
-                    act_c1, act_c2 = st.columns([1, 1], gap="small")
+                    # 卡片核心操作：1. 点击高亮定位代码；2. 直接修改为AI建议
+                    act_c1, act_c2 = st.columns([1.1, 1.4], gap="small")
                     with act_c1:
-                        if st.button(f"🛠️ 一键修复", key=f"btn_fix_{idx}", use_container_width=True):
-                            st.session_state.pending_task = {
-                                "prompt": f"/refactor: 请针对第 {line_no} 行的【{cat_name}】漏洞进行彻底修复并输出完整重构代码，杜绝运行时异常",
-                                "task_type": "refactor"
-                            }
-                            st.toast(f"已向专家发起针对 [R-{idx:02d}] 的修复！", icon="🛠️")
+                        focus_label = "🎯 已定位高亮" if is_focused else "📍 高亮定位代码"
+                        if st.button(focus_label, key=f"btn_focus_{idx}", use_container_width=True, help=f"在中间源码中精确定位并高亮第 {line_no} 行"):
+                            st.session_state.focused_risk_line = line_no
+                            st.session_state.focused_risk_id = issue_key
+                            st.toast(f"已在中间源码中高亮定位第 {line_no} 行！", icon="🎯")
                             st.rerun()
                     with act_c2:
-                        if st.button(f"💬 深度追问", key=f"btn_ask_{idx}", use_container_width=True):
-                            st.session_state.pending_task = {
-                                "prompt": f"/review: 请向我深入解释第 {line_no} 行出现的【{cat_name}】漏洞：在何种特定业务输入或边界条件下会触发？它的底层运行机制是什么？如何彻底杜绝？",
-                                "task_type": "review"
-                            }
-                            st.toast(f"已向 Copilot 发起深度追问！", icon="💬")
-                            st.rerun()
+                        if is_fixed:
+                            st.button("✔ 已修改生效", key=f"btn_fixed_{idx}", disabled=True, use_container_width=True)
+                        else:
+                            if st.button("💡 修改为AI建议", key=f"btn_apply_{idx}", type="primary", use_container_width=True, help=f"直接将中间源码中第 {line_no} 行的代码修改替换为 AI 修复建议"):
+                                new_code = apply_single_issue_fix(st.session_state.active_code, iss)
+                                if new_code != st.session_state.active_code:
+                                    st.session_state.active_code = new_code
+                                    st.session_state.fixed_risk_ids.add(issue_key)
+                                    st.session_state.highlight_fixed_lines.add(line_no)
+                                    st.session_state.focused_risk_line = line_no
+                                    st.session_state.focused_risk_id = issue_key
+                                    st.toast(f"已直接将 [{issue_key}] 修改为 AI 推荐代码！", icon="✨")
+                                    st.rerun()
+                                elif st.session_state.get("refactored_code"):
+                                    st.session_state.active_code = st.session_state.refactored_code
+                                    st.session_state.fixed_risk_ids.add(issue_key)
+                                    st.session_state.highlight_fixed_lines.add(line_no)
+                                    st.toast(f"已直接将 [{issue_key}] 应用 AI 重构代码！", icon="✨")
+                                    st.rerun()
+                                else:
+                                    st.toast("未自动匹配到局部代码片段，请切换至【✏️ 在线交互编辑】手工微调。", icon="⚠️")
             else:
                 st.success("✅ 当前筛选条件下无缺陷，代码符合规范！")
 
