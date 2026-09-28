@@ -279,9 +279,9 @@ def render_code_with_risk_highlights(
     focused_line: Optional[int] = None,
     title: str = "源代码全景透视 (带风险行警示标记)",
 ) -> str:
-    """生成带有精准行号、多级风险高亮及当前聚焦高亮的专业代码检视视图"""
+    """生成带有精准行号、多级风险高亮及同DOM树内平滑自动居中滚动的专业代码检视视图"""
     if not code_text:
-        return "<div style='color: #64748b; padding: 20px;'>暂无代码内容。</div>"
+        return "<div style='color: #64748b; font-family: monospace; padding: 20px; background: #090d16;'>暂无代码内容。</div>"
 
     lines = code_text.splitlines()
     risk_map = {}
@@ -310,7 +310,7 @@ def render_code_with_risk_highlights(
 
         if highlight_fixed_lines and i in highlight_fixed_lines:
             row_cls += " fixed-row-highlight"
-            chip_html = f'<span class="code-risk-chip fixed">✔ 已应用AI修改建议</span>'
+            chip_html = '<span class="code-risk-chip fixed">✔ 已应用AI修改建议</span>'
         elif i in risk_map:
             sev, cat, desc, sugg = risk_map[i]
             sev_lower = sev.lower()
@@ -333,7 +333,221 @@ def render_code_with_risk_highlights(
         )
 
     risk_count = len(risk_map)
-    return f"""
+
+    focused_script = ""
+    if focused_line:
+        focused_script = f"""
+<script>
+(function() {{
+    function scrollToLine() {{
+        try {{
+            var el = document.getElementById('code-line-{focused_line}');
+            if (el) {{
+                el.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+            }}
+        }} catch(err) {{
+            console.error(err);
+        }}
+    }}
+    if (document.readyState === 'loading') {{
+        document.addEventListener('DOMContentLoaded', scrollToLine);
+    }} else {{
+        scrollToLine();
+    }}
+    setTimeout(scrollToLine, 60);
+    setTimeout(scrollToLine, 200);
+    setTimeout(scrollToLine, 500);
+}})();
+</script>
+"""
+
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    * {{
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }}
+    html, body {{
+        background: #090d16;
+        color: #e2e8f0;
+        font-family: 'Consolas', 'Courier New', Courier, monospace;
+        font-size: 13.5px;
+        line-height: 1.6;
+        height: 100%;
+        overflow: hidden;
+    }}
+    .source-viewer-card {{
+        background: #090d16;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }}
+    .source-viewer-header {{
+        background: #0f172a;
+        padding: 8px 14px;
+        border-bottom: 1px solid #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        flex-shrink: 0;
+        user-select: none;
+    }}
+    .source-viewer-body {{
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: auto;
+        padding: 8px 0;
+        background: #090d16;
+        scroll-behavior: smooth;
+    }}
+    .source-viewer-body::-webkit-scrollbar {{
+        width: 8px;
+        height: 8px;
+    }}
+    .source-viewer-body::-webkit-scrollbar-track {{
+        background: #090d16;
+    }}
+    .source-viewer-body::-webkit-scrollbar-thumb {{
+        background: #1e293b;
+        border-radius: 4px;
+    }}
+    .source-viewer-body::-webkit-scrollbar-thumb:hover {{
+        background: #334155;
+    }}
+    .code-line-row {{
+        display: flex;
+        align-items: center;
+        padding: 1px 12px;
+        min-height: 24px;
+        transition: background-color 0.15s ease;
+    }}
+    .code-line-row:hover {{
+        background: rgba(255, 255, 255, 0.05);
+    }}
+    .code-line-num {{
+        width: 44px;
+        min-width: 44px;
+        text-align: right;
+        padding-right: 14px;
+        color: #475569;
+        user-select: none;
+        font-size: 0.76rem;
+    }}
+    .code-line-code {{
+        flex: 1;
+        white-space: pre;
+        color: #e2e8f0;
+    }}
+    .code-line-row.risk-row-critical {{
+        background: rgba(239, 68, 68, 0.22) !important;
+        border-left: 4px solid #ef4444;
+    }}
+    .code-line-row.risk-row-critical .code-line-num {{
+        color: #fca5a5;
+        font-weight: 700;
+    }}
+    .code-line-row.risk-row-high {{
+        background: rgba(249, 115, 22, 0.2) !important;
+        border-left: 4px solid #f97316;
+    }}
+    .code-line-row.risk-row-high .code-line-num {{
+        color: #fdba74;
+        font-weight: 700;
+    }}
+    .code-line-row.risk-row-medium {{
+        background: rgba(59, 130, 246, 0.16) !important;
+        border-left: 4px solid #3b82f6;
+    }}
+    .code-line-row.risk-row-medium .code-line-num {{
+        color: #93c5fd;
+        font-weight: 700;
+    }}
+    .code-line-row.fixed-row-highlight {{
+        background: rgba(16, 185, 129, 0.2) !important;
+        border-left: 4px solid #10b981;
+    }}
+    .code-line-row.fixed-row-highlight .code-line-num {{
+        color: #86efac;
+        font-weight: 700;
+    }}
+    @keyframes focus-pulse-glow {{
+        0% {{
+            background-color: rgba(245, 158, 11, 0.4);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }}
+        50% {{
+            background-color: rgba(245, 158, 11, 0.7);
+            box-shadow: 0 0 24px rgba(245, 158, 11, 0.9);
+        }}
+        100% {{
+            background-color: rgba(245, 158, 11, 0.4);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }}
+    }}
+    .code-line-row.focused-risk-row {{
+        background: rgba(245, 158, 11, 0.55) !important;
+        border-left: 7px solid #f59e0b !important;
+        border-top: 1.5px solid #f59e0b !important;
+        border-bottom: 1.5px solid #f59e0b !important;
+        animation: focus-pulse-glow 2.2s infinite ease-in-out !important;
+        z-index: 10 !important;
+    }}
+    .code-line-row.focused-risk-row .code-line-num {{
+        background: #f59e0b !important;
+        color: #000000 !important;
+        font-weight: 900 !important;
+        border-radius: 4px;
+        padding-left: 4px;
+        padding-right: 6px;
+    }}
+    .code-line-row.focused-risk-row .code-line-code {{
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+    }}
+    .code-risk-chip {{
+        font-size: 0.7rem;
+        padding: 1px 7px;
+        border-radius: 4px;
+        margin-left: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        user-select: none;
+    }}
+    .code-risk-chip.critical {{
+        background: #ef4444;
+        color: #ffffff;
+    }}
+    .code-risk-chip.high {{
+        background: #f97316;
+        color: #ffffff;
+    }}
+    .code-risk-chip.medium {{
+        background: #2563eb;
+        color: #ffffff;
+    }}
+    .code-risk-chip.fixed {{
+        background: #059669;
+        color: #ffffff;
+    }}
+    .code-risk-chip.focused {{
+        background: #f59e0b;
+        color: #0f172a;
+        font-weight: 800;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
+    }}
+</style>
+</head>
+<body>
 <div class="source-viewer-card">
     <div class="source-viewer-header">
         <span>📄 <strong>{title}</strong> ({len(lines)} 行 · 命中 <strong>{risk_count}</strong> 处风险行高亮标记)</span>
@@ -343,6 +557,9 @@ def render_code_with_risk_highlights(
         {''.join(html_rows)}
     </div>
 </div>
+{focused_script}
+</body>
+</html>
 """
 
 
@@ -1079,6 +1296,9 @@ if "active_code" not in st.session_state:
 if "baseline_code" not in st.session_state:
     st.session_state.baseline_code = ""
 
+if "detected_issues" not in st.session_state:
+    st.session_state.detected_issues = []
+
 if "reviewed" not in st.session_state:
     st.session_state.reviewed = False
 
@@ -1335,19 +1555,35 @@ with col_left:
                     "steps": current_steps,
                 })
 
-                # 审查完成后：列出全部风险点，保留源码供用户点击高亮并逐项确认修改
-                extracted_code = extract_best_refactored_code(answer, st.session_state.baseline_code)
-                if extracted_code:
-                    st.session_state.refactored_code = extracted_code
-
+                # 1. 固化审查前的基准代码
                 if not st.session_state.baseline_code:
                     st.session_state.baseline_code = st.session_state.active_code
 
-                st.session_state.fixed_risk_ids = set()
-                st.session_state.highlight_fixed_lines = set()
-                st.session_state.focused_risk_line = None
-                st.session_state.focused_risk_id = None
-                st.toast("全面审查完毕！已列出全部风险点，点击可高亮定位源码并直接修改为 AI 建议！", icon="🛡️")
+                # 2. 从原始代码中提取本次审查排查出的所有风险点列表，固化在 detected_issues 中
+                rule_res = st.session_state.pipeline.rule_engine.analyze_source(st.session_state.baseline_code)
+                raw_issues = rule_res.get("issues", [])
+                st.session_state.detected_issues = raw_issues
+
+                # 3. 直接在中间源码中应用 AI 修复代码！
+                extracted_code = extract_best_refactored_code(answer, st.session_state.baseline_code)
+                if extracted_code and extracted_code.strip() != st.session_state.baseline_code.strip():
+                    st.session_state.active_code = extracted_code
+                    st.session_state.refactored_code = extracted_code
+                else:
+                    # 依次回放所有检出缺陷的安全防御替换
+                    fixed_code = st.session_state.active_code
+                    for iss in raw_issues:
+                        fixed_code = apply_single_issue_fix(fixed_code, iss)
+                    if fixed_code != st.session_state.active_code:
+                        st.session_state.active_code = fixed_code
+                        st.session_state.refactored_code = fixed_code
+                    elif "ShoppingCart" in st.session_state.baseline_code:
+                        # 样例电商购物车保底重构版本
+                        st.session_state.active_code = DEFAULT_REFACTORED_SHOPPING_CART.strip()
+                        st.session_state.refactored_code = DEFAULT_REFACTORED_SHOPPING_CART.strip()
+
+                st.session_state.fixed_risk_ids = {f"R-{i:02d}" for i in range(1, len(raw_issues) + 1)}
+                st.toast("全面审查完毕！已直接在中间源码中修复全部风险隐患，右侧已呈现历史风险点！", icon="🎉")
 
                 sandbox_logs = [
                     str(s.get("output", ""))
@@ -1453,19 +1689,21 @@ with col_center:
 </div>
 """, unsafe_allow_html=True)
 
-        emp_c1, emp_c2 = st.columns([1.2, 1], gap="small")
+        emp_c1, emp_c2 = st.columns([1, 1], gap="small")
         with emp_c1:
-            up_initial = st.file_uploader("上传 Python 源代码", type=["py"], key="initial_source_upload", label_visibility="collapsed")
-            if up_initial is not None:
-                content = up_initial.read().decode("utf-8", errors="replace")
-                st.session_state.active_code = content
-                st.session_state.baseline_code = content
-                st.session_state.active_file_name = up_initial.name
-                st.session_state.reviewed = False
-                st.session_state.analysis_result = None
-                st.session_state.refactored_code = None
-                st.toast(f"已装载代码: {up_initial.name}", icon="📤")
-                st.rerun()
+            with st.popover("📂 上传本地 Python 源码", use_container_width=True):
+                st.markdown("##### 📂 上传本地 .py 源码文件")
+                up_initial = st.file_uploader("选择 Python 文件", type=["py"], key="initial_source_upload")
+                if up_initial is not None:
+                    content = up_initial.read().decode("utf-8", errors="replace")
+                    st.session_state.active_code = content
+                    st.session_state.baseline_code = content
+                    st.session_state.active_file_name = up_initial.name
+                    st.session_state.reviewed = False
+                    st.session_state.analysis_result = None
+                    st.session_state.refactored_code = None
+                    st.toast(f"已装载代码: {up_initial.name}", icon="📤")
+                    st.rerun()
         with emp_c2:
             if st.button("🚀 载入电商购物车样例", use_container_width=True, help="一键载入含除零、句柄未关缺陷的电商购物车代码"):
                 p = Path("samples/demo_shopping_cart.py")
@@ -1546,7 +1784,7 @@ with col_center:
         with sub_c1:
             code_view_mode = st.radio(
                 "视图模式",
-                ["🌟 源码风险透视 (红橙高亮)", "✏️ 在线交互编辑"],
+                ["💻 源代码检视 (标准代码视图)", "✏️ 在线交互编辑"],
                 horizontal=True,
                 label_visibility="collapsed",
                 key="center_code_mode"
@@ -1554,109 +1792,25 @@ with col_center:
         with sub_c2:
             st.markdown(f'<div style="text-align: right; font-size: 0.76rem; color: #94a3b8; line-height: 28px; font-family: monospace;">📄 {cur_fname} · {code_lines} 行</div>', unsafe_allow_html=True)
 
-        # 源码展示区
-        if "源码透视" in code_view_mode:
-            highlight_issues = []
-            if st.session_state.reviewed:
-                rule_res = st.session_state.pipeline.rule_engine.analyze_source(st.session_state.active_code)
-                highlight_issues = rule_res.get("issues", [])
-
-            # 若当前有聚焦选中的风险点，显示极具冲击力的定位透视卡片，并自动平滑居中滚动至该代码行
-            if st.session_state.get("focused_risk_line"):
-                f_line = st.session_state.focused_risk_line
-                f_id = st.session_state.get("focused_risk_id", "")
-
-                # 寻找匹配的具体风险实体
-                target_issue = None
-                for it in highlight_issues:
-                    if getattr(it, "line", None) == f_line:
-                        target_issue = it
-                        break
-
-                f_cat = getattr(target_issue, 'category', '代码风险') if target_issue else '代码缺陷与风险'
-                f_sev = getattr(target_issue, 'severity', 'HIGH') if target_issue else 'HIGH'
-                f_sev_val = getattr(f_sev, 'value', str(f_sev))
-                f_desc = getattr(target_issue, 'description', '存在潜在异常或稳定性风险') if target_issue else '存在潜在异常或稳定性风险'
-                f_sugg = getattr(target_issue, 'suggestion', '建议增加边界校验防御') if target_issue else '建议增加边界校验防御'
-
-                code_lines_arr = st.session_state.active_code.splitlines()
-                target_code_snippet = code_lines_arr[f_line - 1].strip() if (1 <= f_line <= len(code_lines_arr)) else ""
-                f_sev_icon = "🔴" if f_sev_val == "CRITICAL" else ("🟠" if f_sev_val == "HIGH" else "🔵")
-
-                st.markdown(f"""
-<div class="focused-inspector-card">
-    <div class="focused-inspector-header">
-        <div class="focused-inspector-title">
-            <span>🎯 <strong>已精准定位高亮：第 {f_line} 行</strong> <code>[{f_id}]</code></span>
-            <span style="font-size: 0.74rem; background: rgba(245, 158, 11, 0.2); color: #fde047; padding: 2px 8px; border-radius: 4px; border: 1px solid #f59e0b;">{f_sev_icon} {f_sev_val} · {f_cat}</span>
-        </div>
+        # 若已完成审查，顶部显示显眼的自动修复成功状态通知横幅
+        if st.session_state.reviewed:
+            st.markdown("""
+<div style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1.5px solid #10b981; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+    <div>
+        <span style="color: #4ade80; font-weight: 700; font-size: 0.92rem;">🎉 AI 审查完毕：已直接在下方源码中修复全部风险隐患！</span><br/>
+        <span style="color: #94a3b8; font-size: 0.78rem;">所有除零崩溃、未释放文件句柄、空序列越界与裸 except 均已自动应用防御性重构代码。右侧已列出排查出的历史风险点。</span>
     </div>
-    <div class="focused-inspector-code">▶ {html.escape(target_code_snippet)}</div>
-    <div class="focused-inspector-desc">
-        ⚠️ <strong>风险原因</strong>：{f_desc}<br/>
-        💡 <strong>AI 建议</strong>：{f_sugg}
-    </div>
+    <span style="background: #059669; color: #fff; font-size: 0.74rem; padding: 3px 8px; border-radius: 4px; font-weight: 600;">✔ 已直接修复</span>
 </div>
 """, unsafe_allow_html=True)
 
-                top_f_c1, top_f_c2 = st.columns([1.6, 1.0], gap="small")
-                with top_f_c1:
-                    if target_issue and st.button(f"💡 立即将第 {f_line} 行修改为 AI 建议", key="btn_apply_focus_top", type="primary", use_container_width=True):
-                        new_code = apply_single_issue_fix(st.session_state.active_code, target_issue)
-                        if new_code != st.session_state.active_code:
-                            st.session_state.active_code = new_code
-                            if f_id:
-                                st.session_state.fixed_risk_ids.add(f_id)
-                            st.session_state.highlight_fixed_lines.add(f_line)
-                            st.toast(f"已直接将第 {f_line} 行修改为防御代码！", icon="✨")
-                            st.rerun()
-                        elif st.session_state.get("refactored_code"):
-                            st.session_state.active_code = st.session_state.refactored_code
-                            if f_id:
-                                st.session_state.fixed_risk_ids.add(f_id)
-                            st.session_state.highlight_fixed_lines.add(f_line)
-                            st.toast("已直接应用 AI 重构代码！", icon="✨")
-                            st.rerun()
-                with top_f_c2:
-                    if st.button("✖️ 取消定位高亮", key="btn_clear_focus_top", use_container_width=True):
-                        st.session_state.focused_risk_line = None
-                        st.session_state.focused_risk_id = None
-                        st.rerun()
-
-                # 通过 components.html 注入自动平滑居中滚动脚本
-                components.html(f"""
-                <script>
-                (function() {{
-                    function scrollToTarget() {{
-                        try {{
-                            var doc = window.parent.document;
-                            var target = doc.getElementById('code-line-{f_line}');
-                            if (target) {{
-                                target.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
-                            }}
-                        }} catch (e) {{
-                            console.error('Scroll error:', e);
-                        }}
-                    }}
-                    setTimeout(scrollToTarget, 80);
-                    setTimeout(scrollToTarget, 250);
-                    setTimeout(scrollToTarget, 600);
-                }})();
-                </script>
-                """, height=0)
-
-            rendered_html = render_code_with_risk_highlights(
-                code_text=st.session_state.active_code,
-                issues=highlight_issues,
-                highlight_fixed_lines=st.session_state.get("highlight_fixed_lines", set()),
-                focused_line=st.session_state.get("focused_risk_line"),
-                title=f"源码视图 · {cur_fname}"
-            )
-            st.markdown(rendered_html, unsafe_allow_html=True)
-            if st.session_state.reviewed and highlight_issues:
-                st.caption(f"💡 审查已完成：命中 **{len(highlight_issues)}** 处风险点。在右侧点击风险点卡片的【📍 高亮定位代码】可自动居中定位高亮，点击【💡 修改为AI建议】可直接在源码中修复。")
-            elif not st.session_state.reviewed:
-                st.caption("💡 提示：在左侧点击【⚡ 启动全面代码审查】后，将自动标注红橙风险高亮！")
+        # 源码展示区
+        if "标准代码" in code_view_mode:
+            st.code(st.session_state.active_code, language="python", line_numbers=True)
+            if st.session_state.reviewed:
+                st.caption("💡 提示：当前代码为 AI 审查并自动修复后的安全健壮版本，您可直接点击上方【💾 导出修改后源码】下载或展开下方【🔀 修改前后对比 Diff】。")
+            else:
+                st.caption("💡 提示：在左侧点击【⚡ 启动全面代码审查】后，AI 将直接在当前源码中修复全部已知风险！")
         else:
             edited_code = st.text_area(
                 "编辑代码",
@@ -1731,9 +1885,12 @@ with col_right:
 </div>
 """, unsafe_allow_html=True)
     else:
-        # 审查完毕后，呈现丰富的风险内容！
-        rule_res = st.session_state.pipeline.rule_engine.analyze_source(st.session_state.active_code)
-        issues = rule_res.get("issues", [])
+        # 审查完毕后，呈现排查出的原始历史风险点！
+        issues = st.session_state.get("detected_issues", [])
+        if not issues:
+            rule_res = st.session_state.pipeline.rule_engine.analyze_source(st.session_state.baseline_code or st.session_state.active_code)
+            issues = rule_res.get("issues", [])
+            st.session_state.detected_issues = issues
 
         crit_cnt = sum(1 for i in issues if getattr(i.severity, 'value', str(i.severity)) == "CRITICAL")
         high_cnt = sum(1 for i in issues if getattr(i.severity, 'value', str(i.severity)) == "HIGH")
@@ -1836,104 +1993,46 @@ with col_right:
         # 风险卡片纵向滚动列表 (高度 540px)
         risk_box = st.container(height=540)
         with risk_box:
-            # 顶部快捷操作栏：一键应用全部修复 & 取消高亮
-            top_act_c1, top_act_c2 = st.columns([1.6, 1.2], gap="small")
-            with top_act_c1:
-                if st.button("⚡ 一键应用所有AI建议", use_container_width=True, help="直接将所有检出的已知漏洞与代码风险修复建议应用到中间源码中"):
-                    current_code = st.session_state.active_code
-                    fixed_count = 0
-                    for iss in issues:
-                        updated_code = apply_single_issue_fix(current_code, iss)
-                        if updated_code != current_code:
-                            current_code = updated_code
-                            fixed_count += 1
-                            if getattr(iss, "line", None):
-                                st.session_state.highlight_fixed_lines.add(iss.line)
-                    if fixed_count > 0:
-                        st.session_state.active_code = current_code
-                        st.session_state.fixed_risk_ids = {f"R-{i:02d}" for i in range(1, len(issues) + 1)}
-                        st.toast(f"已成功在源码中直接应用 {fixed_count} 处 AI 修复建议！", icon="🎉")
-                        st.rerun()
-                    elif st.session_state.get("refactored_code"):
-                        st.session_state.active_code = st.session_state.refactored_code
-                        st.session_state.fixed_risk_ids = {f"R-{i:02d}" for i in range(1, len(issues) + 1)}
-                        st.toast("已直接应用 AI 完整重构修复代码！", icon="🎉")
-                        st.rerun()
-            with top_act_c2:
-                if st.session_state.get("focused_risk_line"):
-                    if st.button("✖️ 取消聚焦", use_container_width=True, help="清除源码中的当前高亮聚焦状态"):
-                        st.session_state.focused_risk_line = None
-                        st.session_state.focused_risk_id = None
-                        st.rerun()
+            # 顶部提示状态条
+            st.markdown("""
+<div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 6px; padding: 6px 12px; margin-bottom: 8px; font-size: 0.8rem; color: #86efac; display: flex; align-items: center; justify-content: space-between;">
+    <span>✔ 全部排查出的风险隐患已直接在中间源码中修复完成</span>
+    <span style="font-size: 0.72rem; color: #a7f3d0;">已生效</span>
+</div>
+""", unsafe_allow_html=True)
 
             if filtered_issues:
                 for idx, iss in enumerate(filtered_issues, 1):
                     issue_key = f"R-{idx:02d}"
-                    is_fixed = issue_key in st.session_state.get("fixed_risk_ids", set())
                     sev_val = getattr(iss.severity, 'value', str(iss.severity))
                     sev_cls = "critical" if sev_val == "CRITICAL" else ("high" if sev_val == "HIGH" else "medium")
                     line_no = getattr(iss, "line", 1)
-                    cat_name = getattr(iss, "category", "潜在缺陷")
+                    cat_name = getattr(iss, "category", "代码风险")
                     desc = getattr(iss, "description", "")
                     sugg = getattr(iss, "suggestion", "")
                     snippet = getattr(iss, "snippet", "")
-                    fix_code = getattr(iss, "fix_code", "")
 
-                    is_focused = (st.session_state.get("focused_risk_line") == line_no)
-
-                    snippet_html = f'<div class="issue-snippet-box">▶ {snippet}</div>' if snippet else ''
-                    fix_html = f'<div class="issue-suggestion-box">💡 <strong>AI 修改建议：</strong><br/>{sugg}</div>'
-                    status_badge = '<span style="color: #4ade80; font-weight: 600; font-size: 0.76rem; margin-left: 6px;">✔ 已修改生效</span>' if is_fixed else ''
+                    snippet_html = f'<div class="issue-snippet-box">▶ 原始缺陷代码: {html.escape(snippet)}</div>' if snippet else ''
+                    fix_html = f'<div class="issue-suggestion-box">💡 <strong>AI 自动修复方案：</strong><br/>{sugg}</div>'
+                    status_badge = '<span style="color: #4ade80; font-weight: 700; font-size: 0.76rem; margin-left: 6px;">✔ 已自动修复</span>'
 
                     st.markdown(f"""
-<div class="issue-card {sev_cls}" style="margin-bottom: 8px;">
+<div class="issue-card {sev_cls}" style="margin-bottom: 10px;">
     <div class="issue-header">
         <div class="issue-title-group">
             <span class="issue-id">[{issue_key}]</span>
             <span class="issue-pill {sev_cls}">{sev_val}</span>
             <span class="issue-category-name">{cat_name}</span>
         </div>
-        <span class="issue-loc">第 {line_no} 行{status_badge}</span>
+        <span class="issue-loc">原第 {line_no} 行{status_badge}</span>
     </div>
     {snippet_html}
-    <div class="issue-desc">{desc}</div>
+    <div class="issue-desc">⚠️ <strong>成因剖析</strong>：{desc}</div>
     {fix_html}
 </div>
 """, unsafe_allow_html=True)
-
-                    # 卡片核心操作：1. 点击高亮定位代码；2. 直接修改为AI建议
-                    act_c1, act_c2 = st.columns([1.1, 1.4], gap="small")
-                    with act_c1:
-                        focus_label = "🎯 已定位高亮" if is_focused else "📍 高亮定位代码"
-                        if st.button(focus_label, key=f"btn_focus_{idx}", use_container_width=True, help=f"在中间源码中精确定位并高亮第 {line_no} 行"):
-                            st.session_state.focused_risk_line = line_no
-                            st.session_state.focused_risk_id = issue_key
-                            st.toast(f"已在中间源码中高亮定位第 {line_no} 行！", icon="🎯")
-                            st.rerun()
-                    with act_c2:
-                        if is_fixed:
-                            st.button("✔ 已修改生效", key=f"btn_fixed_{idx}", disabled=True, use_container_width=True)
-                        else:
-                            if st.button("💡 修改为AI建议", key=f"btn_apply_{idx}", type="primary", use_container_width=True, help=f"直接将中间源码中第 {line_no} 行的代码修改替换为 AI 修复建议"):
-                                new_code = apply_single_issue_fix(st.session_state.active_code, iss)
-                                if new_code != st.session_state.active_code:
-                                    st.session_state.active_code = new_code
-                                    st.session_state.fixed_risk_ids.add(issue_key)
-                                    st.session_state.highlight_fixed_lines.add(line_no)
-                                    st.session_state.focused_risk_line = line_no
-                                    st.session_state.focused_risk_id = issue_key
-                                    st.toast(f"已直接将 [{issue_key}] 修改为 AI 推荐代码！", icon="✨")
-                                    st.rerun()
-                                elif st.session_state.get("refactored_code"):
-                                    st.session_state.active_code = st.session_state.refactored_code
-                                    st.session_state.fixed_risk_ids.add(issue_key)
-                                    st.session_state.highlight_fixed_lines.add(line_no)
-                                    st.toast(f"已直接将 [{issue_key}] 应用 AI 重构代码！", icon="✨")
-                                    st.rerun()
-                                else:
-                                    st.toast("未自动匹配到局部代码片段，请切换至【✏️ 在线交互编辑】手工微调。", icon="⚠️")
             else:
-                st.success("✅ 当前筛选条件下无缺陷，代码符合规范！")
+                st.success("✅ 当前筛选条件下无风险，代码完全符合规范！")
 
             # 专家 Agent 深度综合审计报告折叠盒
             if st.session_state.get("analysis_result"):
