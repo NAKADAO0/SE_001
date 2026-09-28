@@ -1,7 +1,7 @@
 """
 重构版本：电商购物车与结算模块 (ShoppingCart & Checkout)
 
-针对 demo_shopping_cart.py 的缺陷与坏味道，本版本引入以下设计模式与原则：
+针对 demo_shopping_cart.py 的缺陷与风险隐患，本版本引入以下设计模式与原则：
 
 设计模式
 --------

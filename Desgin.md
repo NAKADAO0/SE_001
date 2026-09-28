@@ -76,7 +76,7 @@ graph TD
 ### 2.2 多 Agent 专家团队架构 (Multi-Agent Team Architecture)
 - **CodeReviewerAgent**：代码质量与安全审计专家
 - **TestGeneratorAgent**：单元测试与自动化验证专家（测试-执行-纠错闭环）
-- **CodeRefactorAgent**：架构坏味道消除与重构专家（模式化重构）
+- **CodeRefactorAgent**：架构风险隐患消除与重构专家（模式化重构）
 - **CodeExplainerAgent**：逻辑解构与时空复杂度专家
 
 ---

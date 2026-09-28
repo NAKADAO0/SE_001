@@ -67,7 +67,7 @@
 }
 ```
 - **核心逻辑**:
-  1. **Phase 1**: 规则引擎进行 AST 解析，提取静态特征与初筛坏味道；
+  1. **Phase 1**: 规则引擎进行 AST 解析，提取静态特征与初筛风险隐患；
   2. **Phase 2**: 根据 `task_type` 自动分发至对应的 Agent 专家（`review` -> `CodeReviewerAgent`, `test` -> `TestGeneratorAgent`, `refactor` -> `CodeRefactorAgent`, `explain` -> `CodeExplainerAgent`）；
   3. **Phase 3**: 缺陷严重度定级排序与结果去重聚合。
 - **响应示例**:
@@ -98,5 +98,5 @@
 ### 2.4 定向业务端点 (快捷路由)
 - `POST /api/review`：代码质量审查
 - `POST /api/test/generate`：单测自动生成与沙箱执行验证
-- `POST /api/refactor`：消除坏味道与架构重构建议
+- `POST /api/refactor`：消除风险隐患与架构重构建议
 - `POST /api/explain`：代码逐步解释与复杂度评估

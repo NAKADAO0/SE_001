@@ -59,7 +59,7 @@ def main():
 
     task_prompt = (
         "请调用 read_file 工具读取 samples/demo_shopping_cart.py，"
-        "并结合 lint_code 工具静态分析其结构与代码坏味道，"
+        "并结合 lint_code 工具静态分析其结构与代码风险，"
         "指出其中的严重 Bug、潜在异常崩溃点，并给出规范的重构建议。"
     )
 

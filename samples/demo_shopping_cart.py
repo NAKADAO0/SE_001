@@ -9,7 +9,7 @@ import time
 
 
 class ShoppingCart:
-    """购物车类：包含若干业务逻辑缺陷与坏味道"""
+    """购物车类：包含若干业务逻辑缺陷与风险隐患"""
 
     def __init__(self, user_id):
         self.user_id = user_id
@@ -69,7 +69,7 @@ class ShoppingCart:
 def batch_checkout_users(user_carts, discount_ratio):
     """
     批量结算函数：
-    代码坏味道：嵌套过深，裸 except 吞没致命异常
+    代码风险：嵌套过深，裸 except 吞没致命异常
     """
     results = {}
     for uid, cart in user_carts.items():
@@ -79,6 +79,6 @@ def batch_checkout_users(user_carts, discount_ratio):
             res = total * (1.0 - discount_ratio)
             results[uid] = round(res, 2)
         except:
-            # 坏味道：捕获所有异常并静默设为 0
+            # 风险隐患：捕获所有异常并静默设为 0
             results[uid] = 0.0
     return results

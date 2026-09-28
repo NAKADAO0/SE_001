@@ -21,7 +21,7 @@ REFACTOR_SYSTEM_PROMPT = """你是一名软件工程重构与设计模式架构�
    - 单一职责（Single Responsibility）：将混合在业务中的日志、持久化或通知逻辑解耦；
    - 开闭原则（Open-Closed）：新增业务无需修改核心函数。
 3. **向后兼容性**：确保重构后的接口调用方式对既有调用方保持透明兼容。
-4. **输出对比**：提供清晰的代码重构前后对比、消除的坏味道清单以及设计收益说明。
+4. **输出对比**：提供清晰的代码重构前后对比、消除的风险隐患清单以及设计收益说明。
 5. **完整可执行源码输出（至关重要）**：
    在详细阐述重构思路与设计模式之后，你必须在回答的末尾使用单独的 ```python 代码块，输出【整份完整的重构后 Python 代码】。
    - 必须包含原代码中的全部业务类与所有公共函数（不可只输出片段或局部修改）；
@@ -40,7 +40,7 @@ class CodeRefactorAgent(BaseCodeAgent):
     ):
         super().__init__(
             name="CodeRefactorAgent",
-            role_description="代码坏味道消除与设计模式重构专家",
+            role_description="代码风险消除与设计模式重构专家",
             system_prompt=REFACTOR_SYSTEM_PROMPT,
             config=config,
             llm=llm,

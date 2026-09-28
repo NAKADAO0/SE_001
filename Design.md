@@ -85,7 +85,7 @@ graph TD
 | :--- | :--- | :--- | :--- |
 | **CodeReviewerAgent** | 代码质量与安全审计专家 | `read_file`, `lint_code`, `execute_python_code` | 发现隐蔽崩溃Bug、除零风险、未关闭句柄与注入漏洞 |
 | **TestGeneratorAgent** | 单元测试与自动化验证专家 | `execute_python_code`, `run_pytest`, `write_file` | **测试-执行-纠错闭环 (Test-and-Fix Loop)**，保证单测 100% 可用 |
-| **CodeRefactorAgent** | 架构坏味道消除与重构专家 | `read_file`, `lint_code` | 消除长函数与耦合，引入策略模式、上下文管理器与数据类 |
+| **CodeRefactorAgent** | 架构风险隐患消除与重构专家 | `read_file`, `lint_code` | 消除长函数与耦合，引入策略模式、上下文管理器与数据类 |
 | **CodeExplainerAgent** | 逻辑解构与时空复杂度专家 | `read_file` | 拆解核心变量流转，评估渐进式时间与空间复杂度 |
 
 ---

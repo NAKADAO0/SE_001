@@ -101,7 +101,7 @@ class CodePipeline:
         if task_type == "review":
             selected_agent = self.reviewer_agent
             prompt = (
-                f"{context_hint}请深度审查以下代码，发现所有潜在 Bug、异常崩溃点与代码坏味道，"
+                f"{context_hint}请深度审查以下代码，发现所有潜在 Bug、异常崩溃点与代码风险隐患，"
                 f"并给出修复后的对比代码：\n\n```python\n{code_content}\n```"
             )
         elif task_type == "test":
@@ -113,7 +113,7 @@ class CodePipeline:
         elif task_type == "refactor":
             selected_agent = self.refactor_agent
             prompt = (
-                f"{context_hint}请对以下代码进行架构重构，消除坏味道（除零隐患、句柄泄露、硬编码if-elif等），应用合适设计模式（如策略模式、上下文管理器）。\n"
+                f"{context_hint}请对以下代码进行架构重构，消除风险隐患（除零隐患、句柄泄露、硬编码if-elif等），应用合适设计模式（如策略模式、上下文管理器）。\n"
                 f"【极其重要的要求】：请在重构设计说明后，必须在回答的最末尾使用独立的 ```python 代码块输出【整份完整的重构后 Python 源码】（第一行写 # FULL_REFACTORED_CODE 注释）。必须包含原业务中的全部类与所有函数，保证可以直接替换原代码完整运行，严禁省略或局部替换！\n\n```python\n{code_content}\n```"
             )
         elif task_type == "explain":

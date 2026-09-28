@@ -10,12 +10,12 @@ from pydantic import BaseModel, Field
 class RiskSeverity(str, Enum):
     CRITICAL = "CRITICAL"  # 致命Bug (如 ZeroDivisionError、IndexError、未捕获异常)
     HIGH = "HIGH"          # 高危安全/资源风险 (如文件泄漏、注入、死循环)
-    MEDIUM = "MEDIUM"      # 代码坏味道 (如超长函数、过多参数、深层嵌套)
+    MEDIUM = "MEDIUM"      # 代码中危风险 (如超长函数、过多参数、深层嵌套)
     LOW = "LOW"            # 编码规范与PEP8建议
 
 
 class CodeSmellItem(BaseModel):
-    """代码坏味道 / 潜在缺陷实体"""
+    """代码风险 / 潜在缺陷实体"""
     line: Optional[int] = Field(None, description="问题发生行号")
     category: str = Field(..., description="缺陷分类，如 除零风险/资源泄露/语法错误/参数过多")
     severity: RiskSeverity = Field(RiskSeverity.MEDIUM, description="风险等级")
@@ -25,12 +25,15 @@ class CodeSmellItem(BaseModel):
     fix_code: Optional[str] = Field(None, description="推荐修复代码片段")
 
 
+CodeRiskItem = CodeSmellItem  # 别名兼容
+
+
 class ReviewReport(BaseModel):
     """代码审查综合报告"""
     file_path: Optional[str] = Field(None, description="分析的目标文件路径")
     syntax_valid: bool = Field(True, description="语法是否合法")
     summary: str = Field(..., description="整体质量评估摘要")
-    issues: List[CodeSmellItem] = Field(default_factory=list, description="缺陷与坏味道列表")
+    issues: List[CodeSmellItem] = Field(default_factory=list, description="代码缺陷与风险列表")
     refactored_code: Optional[str] = Field(None, description="推荐重构后的完整参考代码")
 
 
@@ -56,7 +59,7 @@ class ExplanationReport(BaseModel):
 class RefactorPlan(BaseModel):
     """架构重构方案"""
     target: str = Field(..., description="重构对象")
-    smells_resolved: List[str] = Field(default_factory=list, description="解决的坏味道清单")
+    smells_resolved: List[str] = Field(default_factory=list, description="消除的代码风险隐患清单")
     patterns_used: List[str] = Field(default_factory=list, description="应用的设计模式")
     original_snippet: str = Field(..., description="重构前关键代码")
     refactored_code: str = Field(..., description="重构后规范代码")

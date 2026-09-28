@@ -1,6 +1,6 @@
 """
-演示样例 1：包含典型缺陷、代码坏味道与潜在运行异常的代码片段。
-供 CodeMate-Agent 进行代码审查 (Review)、坏味道诊断与重构 (Refactor) 演示。
+演示样例 1：包含典型缺陷、代码风险与潜在运行异常的代码片段。
+供 CodeMate-Agent 进行代码审查 (Review)、风险隐患诊断与重构 (Refactor) 演示。
 """
 
 import os
@@ -8,7 +8,7 @@ import os
 
 def process_user_data(user_id, name, age, email, address, phone, score, tags, is_admin=False):
     """
-    此函数存在多项坏味道与缺陷：
+    此函数存在多项风险隐患与缺陷：
     1. 参数过多（超过 6 个）
     2. 潜在 ZeroDivisionError 未做分母校验
     3. 裸 except 吞掉异常

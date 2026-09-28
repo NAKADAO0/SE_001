@@ -16,7 +16,7 @@
 
 | 评审维度 | 权重 | 评分要点 | 本项目实现方案与代码位置 | 得分要点索引 |
 | :--- | :---: | :--- | :--- | :--- |
-| **功能完整性** | **40%** | • 核心功能是否可用<br/>• 边界情况处理 | • **代码质量全面分析**：语法合规、函数规模、圈复杂度、坏味道扫描；<br/>• **深层 Bug 发现**：除零崩溃 (`ZeroDivisionError`)、未关文件 (`Resource Leak`)、空序列崩溃 (`ValueError/IndexError`)、异常掩盖 (`Bare Except`)、可变默认参数等；<br/>• **改进建议输出**：结构化报告 + 修复代码对比 (Diff)；<br/>• **边界处理**：空文本友好捕获、语法错误精确锁定行号、无限循环与沙箱超时 5s 强制熔断。 | [`code_analyzer/query/rule_engine.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/query/rule_engine.py)<br/>[`code_analyzer/tools/exec_tools.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/tools/exec_tools.py)<br/>[`web_app.py`](file:///e:/python_project/SoftEngineeing/web_app.py) |
+| **功能完整性** | **40%** | • 核心功能是否可用<br/>• 边界情况处理 | • **代码质量全面分析**：语法合规、函数规模、圈复杂度、代码风险扫描；<br/>• **深层 Bug 发现**：除零崩溃 (`ZeroDivisionError`)、未关文件 (`Resource Leak`)、空序列崩溃 (`ValueError/IndexError`)、异常掩盖 (`Bare Except`)、可变默认参数等；<br/>• **改进建议输出**：结构化报告 + 修复代码对比 (Diff)；<br/>• **边界处理**：空文本友好捕获、语法错误精确锁定行号、无限循环与沙箱超时 5s 强制熔断。 | [`code_analyzer/query/rule_engine.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/query/rule_engine.py)<br/>[`code_analyzer/tools/exec_tools.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/tools/exec_tools.py)<br/>[`web_app.py`](file:///e:/python_project/SoftEngineeing/web_app.py) |
 | **Agent 架构** | **30%** | • 是否体现 Agent 设计模式<br/>• 架构清晰度 | • **主流框架**：全面采用 LangChain (`ChatOpenAI`, `StructuredTool`, `BaseMessage`)；<br/>• **ReAct 设计模式**：推理 ➔ 工具 ➔ 观察 ➔ 总结循环；<br/>• **两阶段流水线 (Pipeline)**：Phase 1 静态 AST 规则初筛 ➔ Phase 2 Agent 深度推理 ➔ Phase 3 聚合校验；<br/>• **上下文记忆**：基于 LangChain 消息栈的滑动窗口 Memory。 | [`code_analyzer/agents/base_agent.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/agents/base_agent.py)<br/>[`code_analyzer/core/memory.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/core/memory.py)<br/>[`code_analyzer/query/pipeline.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/query/pipeline.py) |
 | **代码质量** | **20%** | • 规范性与可维护性<br/>• 错误处理与重试 | • **规范性**：PEP 8 命名规范、Pydantic 强类型数据契约；<br/>• **自动化测试**：22 个 pytest 单元测试 100% 通过（覆盖 Agent 循环、LangChain 工具、记忆、流水线）；<br/>• **容错与重试**：LLM 调用带指数退避重试 (Tenacity)，子进程沙箱隔离，最大迭代次数限制防死循环。 | [`code_analyzer/core/llm_client.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/core/llm_client.py)<br/>[`code_analyzer/schemas/code_types.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/schemas/code_types.py)<br/>[`tests/`](file:///e:/python_project/SoftEngineeing/tests/) |
 | **文档** | **10%** | • README、使用说明<br/>• 技术文档 | • 详尽的架构图 (Mermaid)、交互说明、启动批处理脚本 (`start_all.bat` / `kill_all.bat`)、API 规范 (`docs/api_spec.md`)、多智能体规范 (`AGENTS.md`)。 | [`README.md`](file:///e:/python_project/SoftEngineeing/README.md)<br/>[`AGENTS.md`](file:///e:/python_project/SoftEngineeing/AGENTS.md) |
@@ -141,7 +141,7 @@ tests/test_tools.py ......                               [100%]
    - **初始空状态指引**：提示代码已就绪/待审查；
    - **审查完毕全景呈现**：
      - **安全健康评分卡**：基于加权算法计算安全分（如 `75/100 评级: B`）；
-     - **分级指标卡**：🔴 致命崩溃风险 (P0) | 🟠 高危安全与泄漏 (P1) | 🔵 中危与坏味道 (P2)；
+     - **分级指标卡**：🔴 致命崩溃风险 (P0) | 🟠 高危安全与泄漏 (P1) | 🔵 中危与风险隐患 (P2)；
      - **交互式筛选工具条**：支持按严重度单选过滤；
      - **结构化卡片**：标明标号 `[R-01]`、行号定位、问题代码切片、深入机理剖析、推荐修复建议；
      - **一键处置**：点击【🛠️ 一键修复】直接生成修复代码，点击【💬 深度追问】发起底层机理剖析，点击【📥 导出报告】下载 Markdown 报告。

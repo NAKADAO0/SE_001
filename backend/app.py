@@ -64,7 +64,7 @@ def get_tools():
 def analyze_code(req: CodeAnalyzeRequest):
     """
     两阶段流水线统一分析入口
-    Phase 1: 静态规则引擎提取 AST 坏味道
+    Phase 1: 静态规则引擎提取 AST 风险点
     Phase 2: 专业 Agent 深度推理与工具调用自纠错
     Phase 3: 校验与结果聚合
     """

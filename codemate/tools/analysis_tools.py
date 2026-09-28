@@ -48,7 +48,7 @@ class CodeSmellVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-@tool(name="lint_code", description="静态分析 Python 代码的语法合法性，并解析函数、类定义及检测常见代码坏味道")
+@tool(name="lint_code", description="静态分析 Python 代码的语法合法性，并解析函数、类定义及检测常见代码风险缺陷")
 def lint_code(code: str = "", file_path: str = "") -> Dict[str, Any]:
     """静态语法分析"""
     target_code = code
@@ -90,11 +90,11 @@ def lint_code(code: str = "", file_path: str = "") -> Dict[str, Any]:
         report_lines.append(f"函数列表: {', '.join(visitor.functions)}")
 
     if visitor.smells:
-        report_lines.append("\n发现潜在代码坏味道 / 优化建议:")
+        report_lines.append("\n发现潜在代码风险 / 优化建议:")
         for smell in visitor.smells:
             report_lines.append(f" - {smell}")
     else:
-        report_lines.append("\n未发现明显的 AST 级别代码异味。")
+        report_lines.append("\n未发现明显的 AST 级别代码缺陷。")
 
     return {
         "success": True,

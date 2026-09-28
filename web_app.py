@@ -19,6 +19,7 @@ import html
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 import streamlit as st
+import streamlit.components.v1 as components
 
 # 导入核心后端与智能体引擎
 from code_analyzer.core.config import Config
@@ -28,7 +29,7 @@ from code_analyzer.schemas.code_types import RiskSeverity
 
 DEFAULT_REFACTORED_SHOPPING_CART = '''"""
 重构优化版本：电商购物车与结算模块 (Refactored ShoppingCart)
-已应用设计模式并消除所有已识别的缺陷与代码坏味道：
+已应用设计模式并消除所有已识别的缺陷与代码风险隐患：
 1. 策略模式 (Strategy Pattern) 解耦折扣计算，消除硬编码 if-elif
 2. 上下文管理器 (Context Manager `with`) 确保日志文件句柄安全释放
 3. 边界安全防御：判空保护，杜绝 ZeroDivisionError 与 ValueError
@@ -321,10 +322,10 @@ def render_code_with_risk_highlights(
             tooltip = f' title="{html.escape(tip_text)}"'
 
         if is_focused:
-            chip_html += '<span class="code-risk-chip focused">🎯 选中聚焦</span>'
+            chip_html += '<span class="code-risk-chip focused">🎯 正在高亮定位</span>'
 
         html_rows.append(
-            f'<div class="code-line-row {row_cls.strip()}" id="code-line-{i}"{tooltip}>'
+            f'<div class="code-line-row {row_cls.strip()}" id="code-line-{i}" data-line="{i}"{tooltip}>'
             f'<span class="code-line-num">{i}</span>'
             f'<span class="code-line-code">{escaped_line}</span>'
             f'{chip_html}'
@@ -336,9 +337,9 @@ def render_code_with_risk_highlights(
 <div class="source-viewer-card">
     <div class="source-viewer-header">
         <span>📄 <strong>{title}</strong> ({len(lines)} 行 · 命中 <strong>{risk_count}</strong> 处风险行高亮标记)</span>
-        <span style="font-size: 0.74rem; font-family: monospace;">🔴 Critical 致命崩溃 | 🟠 High 资源/安全 | 🔵 Medium 坏味道</span>
+        <span style="font-size: 0.74rem; font-family: monospace;">🔴 Critical 致命崩溃 | 🟠 High 资源/安全 | 🔵 Medium 中危风险</span>
     </div>
-    <div class="source-viewer-body">
+    <div class="source-viewer-body" id="source-viewer-code-container">
         {''.join(html_rows)}
     </div>
 </div>
@@ -941,14 +942,81 @@ st.markdown("""
         color: #86efac;
         font-weight: 700;
     }
+    /* 强效聚焦定位高亮动画与醒目标识 */
+    @keyframes focus-pulse-glow {
+        0% {
+            background-color: rgba(245, 158, 11, 0.4);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
+        50% {
+            background-color: rgba(245, 158, 11, 0.7);
+            box-shadow: 0 0 24px rgba(245, 158, 11, 0.9);
+        }
+        100% {
+            background-color: rgba(245, 158, 11, 0.4);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
+    }
     .code-line-row.focused-risk-row {
-        background: rgba(245, 158, 11, 0.35) !important;
-        border-left: 5px solid #f59e0b !important;
-        box-shadow: inset 0 0 14px rgba(245, 158, 11, 0.35) !important;
+        background: rgba(245, 158, 11, 0.55) !important;
+        border-left: 7px solid #f59e0b !important;
+        border-top: 1.5px solid #f59e0b !important;
+        border-bottom: 1.5px solid #f59e0b !important;
+        animation: focus-pulse-glow 2.2s infinite ease-in-out !important;
+        z-index: 10 !important;
     }
     .code-line-row.focused-risk-row .code-line-num {
-        color: #fde047 !important;
-        font-weight: 800 !important;
+        background: #f59e0b !important;
+        color: #000000 !important;
+        font-weight: 900 !important;
+        border-radius: 4px;
+        padding-left: 4px;
+        padding-right: 6px;
+    }
+    .code-line-row.focused-risk-row .code-line-code {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+    }
+
+    /* 顶部精准高亮透视横幅 (Focused Risk Inspector) */
+    .focused-inspector-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+        border: 2px solid #f59e0b;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
+    }
+    .focused-inspector-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+    .focused-inspector-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #fde047;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .focused-inspector-code {
+        background: #020617;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        padding: 6px 10px;
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 0.82rem;
+        color: #f8fafc;
+        margin: 6px 0;
+        white-space: pre-wrap;
+    }
+    .focused-inspector-desc {
+        font-size: 0.8rem;
+        color: #cbd5e1;
+        line-height: 1.45;
     }
     .code-risk-chip {
         font-size: 0.7rem;
@@ -978,7 +1046,8 @@ st.markdown("""
     .code-risk-chip.focused {
         background: #f59e0b;
         color: #0f172a;
-        font-weight: 700;
+        font-weight: 800;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1204,7 +1273,7 @@ with col_left:
                             "functions": data.get("functions", []),
                             "classes": data.get("classes", []),
                         })
-                        status_box.write(f"🔍 Phase 1 静态初筛完成，识别到 {data.get('initial_issues_count', 0)} 处坏味道")
+                        status_box.write(f"🔍 Phase 1 静态初筛完成，识别到 {data.get('initial_issues_count', 0)} 处风险隐患")
                     elif evt == "phase2_dispatch":
                         current_steps.append({
                             "type": "phase2_dispatch",
@@ -1434,7 +1503,7 @@ with col_center:
                 st.markdown("##### 📚 快速载入测试样例")
                 sample_files = {
                     "电商购物车 (含除零/泄漏)": "samples/demo_shopping_cart.py",
-                    "典型坏味道代码": "samples/buggy_code.py",
+                    "典型风险缺陷样例": "samples/buggy_code.py",
                     "算法函数集": "samples/math_utils.py",
                 }
                 sel_sample = st.selectbox("选择测试样例文件", list(sample_files.keys()))
@@ -1492,11 +1561,89 @@ with col_center:
                 rule_res = st.session_state.pipeline.rule_engine.analyze_source(st.session_state.active_code)
                 highlight_issues = rule_res.get("issues", [])
 
-            # 若当前有聚焦选中的风险点，显示醒目提示
+            # 若当前有聚焦选中的风险点，显示极具冲击力的定位透视卡片，并自动平滑居中滚动至该代码行
             if st.session_state.get("focused_risk_line"):
                 f_line = st.session_state.focused_risk_line
                 f_id = st.session_state.get("focused_risk_id", "")
-                st.info(f"🎯 **当前高亮定位**：`[{f_id}]` 第 **{f_line}** 行代码（已在下方高亮聚焦标注）")
+
+                # 寻找匹配的具体风险实体
+                target_issue = None
+                for it in highlight_issues:
+                    if getattr(it, "line", None) == f_line:
+                        target_issue = it
+                        break
+
+                f_cat = getattr(target_issue, 'category', '代码风险') if target_issue else '代码缺陷与风险'
+                f_sev = getattr(target_issue, 'severity', 'HIGH') if target_issue else 'HIGH'
+                f_sev_val = getattr(f_sev, 'value', str(f_sev))
+                f_desc = getattr(target_issue, 'description', '存在潜在异常或稳定性风险') if target_issue else '存在潜在异常或稳定性风险'
+                f_sugg = getattr(target_issue, 'suggestion', '建议增加边界校验防御') if target_issue else '建议增加边界校验防御'
+
+                code_lines_arr = st.session_state.active_code.splitlines()
+                target_code_snippet = code_lines_arr[f_line - 1].strip() if (1 <= f_line <= len(code_lines_arr)) else ""
+                f_sev_icon = "🔴" if f_sev_val == "CRITICAL" else ("🟠" if f_sev_val == "HIGH" else "🔵")
+
+                st.markdown(f"""
+<div class="focused-inspector-card">
+    <div class="focused-inspector-header">
+        <div class="focused-inspector-title">
+            <span>🎯 <strong>已精准定位高亮：第 {f_line} 行</strong> <code>[{f_id}]</code></span>
+            <span style="font-size: 0.74rem; background: rgba(245, 158, 11, 0.2); color: #fde047; padding: 2px 8px; border-radius: 4px; border: 1px solid #f59e0b;">{f_sev_icon} {f_sev_val} · {f_cat}</span>
+        </div>
+    </div>
+    <div class="focused-inspector-code">▶ {html.escape(target_code_snippet)}</div>
+    <div class="focused-inspector-desc">
+        ⚠️ <strong>风险原因</strong>：{f_desc}<br/>
+        💡 <strong>AI 建议</strong>：{f_sugg}
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+                top_f_c1, top_f_c2 = st.columns([1.6, 1.0], gap="small")
+                with top_f_c1:
+                    if target_issue and st.button(f"💡 立即将第 {f_line} 行修改为 AI 建议", key="btn_apply_focus_top", type="primary", use_container_width=True):
+                        new_code = apply_single_issue_fix(st.session_state.active_code, target_issue)
+                        if new_code != st.session_state.active_code:
+                            st.session_state.active_code = new_code
+                            if f_id:
+                                st.session_state.fixed_risk_ids.add(f_id)
+                            st.session_state.highlight_fixed_lines.add(f_line)
+                            st.toast(f"已直接将第 {f_line} 行修改为防御代码！", icon="✨")
+                            st.rerun()
+                        elif st.session_state.get("refactored_code"):
+                            st.session_state.active_code = st.session_state.refactored_code
+                            if f_id:
+                                st.session_state.fixed_risk_ids.add(f_id)
+                            st.session_state.highlight_fixed_lines.add(f_line)
+                            st.toast("已直接应用 AI 重构代码！", icon="✨")
+                            st.rerun()
+                with top_f_c2:
+                    if st.button("✖️ 取消定位高亮", key="btn_clear_focus_top", use_container_width=True):
+                        st.session_state.focused_risk_line = None
+                        st.session_state.focused_risk_id = None
+                        st.rerun()
+
+                # 通过 components.html 注入自动平滑居中滚动脚本
+                components.html(f"""
+                <script>
+                (function() {{
+                    function scrollToTarget() {{
+                        try {{
+                            var doc = window.parent.document;
+                            var target = doc.getElementById('code-line-{f_line}');
+                            if (target) {{
+                                target.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+                            }}
+                        }} catch (e) {{
+                            console.error('Scroll error:', e);
+                        }}
+                    }}
+                    setTimeout(scrollToTarget, 80);
+                    setTimeout(scrollToTarget, 250);
+                    setTimeout(scrollToTarget, 600);
+                }})();
+                </script>
+                """, height=0)
 
             rendered_html = render_code_with_risk_highlights(
                 code_text=st.session_state.active_code,
@@ -1507,7 +1654,7 @@ with col_center:
             )
             st.markdown(rendered_html, unsafe_allow_html=True)
             if st.session_state.reviewed and highlight_issues:
-                st.caption(f"💡 审查已完成：命中 **{len(highlight_issues)}** 处风险点。在右侧点击风险点可【📍 高亮定位代码】或【💡 修改为AI建议】。")
+                st.caption(f"💡 审查已完成：命中 **{len(highlight_issues)}** 处风险点。在右侧点击风险点卡片的【📍 高亮定位代码】可自动居中定位高亮，点击【💡 修改为AI建议】可直接在源码中修复。")
             elif not st.session_state.reviewed:
                 st.caption("💡 提示：在左侧点击【⚡ 启动全面代码审查】后，将自动标注红橙风险高亮！")
         else:
@@ -1621,9 +1768,9 @@ with col_right:
         <div class="audit-stat-sub" style="font-size: 0.68rem;">句柄未关、吞异常</div>
     </div>
     <div class="audit-stat-card" style="padding: 8px 10px;">
-        <div class="audit-stat-title" style="font-size: 0.72rem;">🔵 中危异味 (P2)</div>
+        <div class="audit-stat-title" style="font-size: 0.72rem;">🔵 中危风险 (P2)</div>
         <div class="audit-stat-value" style="color: #60a5fa; font-size: 1.2rem;">{med_cnt} <span style="font-size: 0.75rem; color: #94a3b8;">处</span></div>
-        <div class="audit-stat-sub" style="font-size: 0.68rem;">参数过多</div>
+        <div class="audit-stat-sub" style="font-size: 0.68rem;">参数过多、嵌套</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -1692,7 +1839,7 @@ with col_right:
             # 顶部快捷操作栏：一键应用全部修复 & 取消高亮
             top_act_c1, top_act_c2 = st.columns([1.6, 1.2], gap="small")
             with top_act_c1:
-                if st.button("⚡ 一键应用所有AI建议", use_container_width=True, help="直接将所有检出的已知漏洞与坏味道修复建议应用到中间源码中"):
+                if st.button("⚡ 一键应用所有AI建议", use_container_width=True, help="直接将所有检出的已知漏洞与代码风险修复建议应用到中间源码中"):
                     current_code = st.session_state.active_code
                     fixed_count = 0
                     for iss in issues:
