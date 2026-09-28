@@ -672,6 +672,87 @@ st.markdown("""
         margin-bottom: 18px;
     }
 
+    /* 中间源码区顶部工具栏 (统一高度 38px，防止折行，主次分明) */
+    div[data-testid="stPopover"] {
+        width: 100% !important;
+    }
+    div[data-testid="stPopover"] > button {
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        border-radius: 8px !important;
+        background: #1e293b !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        color: #f1f5f9 !important;
+        font-size: 0.84rem !important;
+        font-weight: 500 !important;
+        padding: 0 10px !important;
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stPopover"] > button p {
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        font-size: 0.84rem !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: inline !important;
+        color: inherit !important;
+    }
+    div[data-testid="stPopover"] > button:hover {
+        background: #334155 !important;
+        border-color: #38bdf8 !important;
+        color: #38bdf8 !important;
+    }
+    div[data-testid="stPopover"] > button svg {
+        margin-left: 2px !important;
+        width: 14px !important;
+        height: 14px !important;
+    }
+
+    /* 保持中间列所有顶部操作按钮高度严格 38px 齐平 */
+    [data-testid="column"]:nth-child(2) div[data-testid="stButton"] button {
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        border-radius: 8px !important;
+        font-size: 0.86rem !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    [data-testid="column"]:nth-child(2) div[data-testid="stButton"] button[kind="primary"] {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 10px rgba(239, 68, 68, 0.35) !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    [data-testid="column"]:nth-child(2) div[data-testid="stButton"] button[kind="primary"]:hover {
+        background: linear-gradient(135deg, #f87171 0%, #ef4444 100%) !important;
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.5) !important;
+        transform: translateY(-1px) !important;
+    }
+    [data-testid="column"]:nth-child(2) div[data-testid="stButton"] button[kind="secondary"] {
+        background: #1e293b !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        color: #cbd5e1 !important;
+    }
+    [data-testid="column"]:nth-child(2) div[data-testid="stButton"] button[kind="secondary"]:hover {
+        background: rgba(239, 68, 68, 0.15) !important;
+        border-color: rgba(239, 68, 68, 0.4) !important;
+        color: #f87171 !important;
+    }
+
     /* 源代码检视器与风险行高亮 (Source Code Risk Highlighter) */
     .source-viewer-card {
         background: #090d16;
@@ -1073,71 +1154,24 @@ with col_left:
 
             st.rerun()
 
-    # 4 个漂浮在输入框上方的快捷指令按钮 (Claude AI Pill 风格)
-    btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4, gap="small")
-    with btn_col1:
-        if st.button("⚡ 全面审查", use_container_width=True, help="/review: 全维度排查除零、未关文件、越界与安全缺陷"):
-            if not st.session_state.active_code:
-                p = Path("samples/demo_shopping_cart.py")
-                if p.exists():
-                    txt = p.read_text(encoding="utf-8")
-                    st.session_state.active_code = txt
-                    st.session_state.baseline_code = txt
-                    st.session_state.active_file_name = "samples/demo_shopping_cart.py"
-                    st.toast("已自动装载电商购物车样例并启动审查！", icon="🚀")
-            st.session_state.pending_task = {
-                "prompt": "/review: 请对中间源代码进行全维度的深度安全与漏洞审查",
-                "task_type": "review"
-            }
-            st.rerun()
-    with btn_col2:
-        if st.button("➗ 崩溃排查", use_container_width=True, help="/review: 重点排查除以零、空序列max/min、下标越界等崩溃点"):
-            if not st.session_state.active_code:
-                p = Path("samples/demo_shopping_cart.py")
-                if p.exists():
-                    txt = p.read_text(encoding="utf-8")
-                    st.session_state.active_code = txt
-                    st.session_state.baseline_code = txt
-                    st.session_state.active_file_name = "samples/demo_shopping_cart.py"
-                    st.toast("已自动装载样例并启动排查！", icon="🚀")
-            st.session_state.pending_task = {
-                "prompt": "/review: 专项排查代码中的除零、空序列、下标越界等运行时致命崩溃隐患",
-                "task_type": "review"
-            }
-            st.rerun()
-    with btn_col3:
-        if st.button("📂 资源审计", use_container_width=True, help="/review: 重点排查裸open未关闭、文件句柄泄漏与资源释放"):
-            if not st.session_state.active_code:
-                p = Path("samples/demo_shopping_cart.py")
-                if p.exists():
-                    txt = p.read_text(encoding="utf-8")
-                    st.session_state.active_code = txt
-                    st.session_state.baseline_code = txt
-                    st.session_state.active_file_name = "samples/demo_shopping_cart.py"
-                    st.toast("已自动装载样例并启动审计！", icon="🚀")
-            st.session_state.pending_task = {
-                "prompt": "/review: 专项审计代码中裸open文件未关闭、句柄泄漏及外部资源释放安全",
-                "task_type": "review"
-            }
-            st.rerun()
-    with btn_col4:
-        if st.button("🛡️ 异常防御", use_container_width=True, help="/review: 重点排查裸except异常吞噬、静默pass与边界防御"):
-            if not st.session_state.active_code:
-                p = Path("samples/demo_shopping_cart.py")
-                if p.exists():
-                    txt = p.read_text(encoding="utf-8")
-                    st.session_state.active_code = txt
-                    st.session_state.baseline_code = txt
-                    st.session_state.active_file_name = "samples/demo_shopping_cart.py"
-                    st.toast("已自动装载样例并启动排查！", icon="🚀")
-            st.session_state.pending_task = {
-                "prompt": "/review: 专项排查代码中的裸except异常吞噬、静默忽略与输入边界防御缺失",
-                "task_type": "review"
-            }
-            st.rerun()
+    # 专精单一核心功能：⚡ 全面代码审查
+    if st.button("⚡ 启动全面代码审查", type="primary", use_container_width=True, help="启动 CodeReviewerAgent 深入排查代码质量、隐蔽Bug与安全漏洞"):
+        if not st.session_state.active_code:
+            p = Path("samples/demo_shopping_cart.py")
+            if p.exists():
+                txt = p.read_text(encoding="utf-8")
+                st.session_state.active_code = txt
+                st.session_state.baseline_code = txt
+                st.session_state.active_file_name = "samples/demo_shopping_cart.py"
+                st.toast("已自动装载电商购物车样例并启动全面审查！", icon="🚀")
+        st.session_state.pending_task = {
+            "prompt": "/review: 请对当前代码进行全维度的深度全面代码审查，深入排查除零、未关文件、越界与异常掩盖等隐患，并给出修复建议与对比代码",
+            "task_type": "review"
+        }
+        st.rerun()
 
-    # 置底输入框：支持自然语言、指令，以及复制代码直接粘贴
-    input_text = st.chat_input("输入修改需求，或直接在此粘贴 Python 代码...")
+    # 置底输入框：支持自然语言自由交互与复制代码直接粘贴
+    input_text = st.chat_input("输入对当前代码的审查要求，或直接粘贴 Python 代码...")
     if input_text:
         cleaned = input_text.strip()
         pasted = extract_pasted_code(cleaned)
@@ -1243,25 +1277,19 @@ with col_center:
 
     else:
         # 已有代码：顶部单行工具栏 (模式切换、启动审查按钮、上传、样例、清空)
-        tb_c1, tb_c2, tb_c3, tb_c4, tb_c5 = st.columns([2.0, 1.8, 1.0, 1.0, 0.8], gap="small")
-        with tb_c1:
-            code_view_mode = st.radio(
-                "视图模式",
-                ["🌟 源码透视", "✏️ 在线编辑"],
-                horizontal=True,
-                label_visibility="collapsed",
-                key="center_code_mode"
-            )
-        with tb_c2:
-            if st.button("⚡ 启动代码审查", type="primary", use_container_width=True, help="立即启动 CodeReviewerAgent 审查当前代码"):
+        # 1. 核心操作控制栏 (全面代码审查 + 上传 + 样例 + 清空)
+        op_c1, op_c2, op_c3, op_c4 = st.columns([3.6, 2.0, 2.0, 0.9], gap="small")
+        with op_c1:
+            if st.button("⚡ 全面代码审查", type="primary", use_container_width=True, help="启动 CodeReviewerAgent 深入排查代码质量、隐蔽Bug与安全漏洞"):
                 st.session_state.pending_task = {
-                    "prompt": "/review: 请对当前代码进行全面安全与漏洞审查，排查潜在运行时Bug与安全漏洞，并给出修复后的对比代码",
+                    "prompt": "/review: 请对当前代码进行全维度的深度全面代码审查，深入排查除零、未关文件、越界与异常掩盖等隐患，并给出修复建议与对比代码",
                     "task_type": "review"
                 }
                 st.rerun()
-        with tb_c3:
-            with st.popover("📤 上传", use_container_width=True):
-                up_replace = st.file_uploader("上传新 .py 源码", type=["py"], key="replace_source_upload")
+        with op_c2:
+            with st.popover("📤 上传代码", use_container_width=True):
+                st.markdown("##### 📤 上传本地 Python 源码")
+                up_replace = st.file_uploader("选择 .py 文件", type=["py"], key="replace_source_upload")
                 if up_replace is not None:
                     c = up_replace.read().decode("utf-8", errors="replace")
                     if c != st.session_state.active_code:
@@ -1273,15 +1301,16 @@ with col_center:
                         st.session_state.refactored_code = None
                         st.toast(f"已更新源码: {up_replace.name}", icon="📤")
                         st.rerun()
-        with tb_c4:
-            with st.popover("📚 样例", use_container_width=True):
+        with op_c3:
+            with st.popover("📚 样例代码", use_container_width=True):
+                st.markdown("##### 📚 快速载入测试样例")
                 sample_files = {
                     "电商购物车 (含除零/泄漏)": "samples/demo_shopping_cart.py",
                     "典型坏味道代码": "samples/buggy_code.py",
                     "算法函数集": "samples/math_utils.py",
                 }
-                sel_sample = st.selectbox("选择样例文件", list(sample_files.keys()))
-                if st.button("确认切换样例", use_container_width=True):
+                sel_sample = st.selectbox("选择测试样例文件", list(sample_files.keys()))
+                if st.button("载入选中样例", use_container_width=True):
                     sp = Path(sample_files[sel_sample])
                     if sp.exists():
                         st.session_state.active_code = sp.read_text(encoding="utf-8")
@@ -1291,7 +1320,7 @@ with col_center:
                         st.session_state.analysis_result = None
                         st.session_state.refactored_code = None
                         st.rerun()
-        with tb_c5:
+        with op_c4:
             if st.button("🗑️", help="清空当前代码，恢复初始空状态", use_container_width=True):
                 st.session_state.active_code = ""
                 st.session_state.baseline_code = ""
@@ -1300,6 +1329,19 @@ with col_center:
                 st.session_state.analysis_result = None
                 st.session_state.refactored_code = None
                 st.rerun()
+
+        # 2. 紧贴代码顶部的视图模式切换与状态条
+        sub_c1, sub_c2 = st.columns([5.5, 3.5], gap="small")
+        with sub_c1:
+            code_view_mode = st.radio(
+                "视图模式",
+                ["🌟 源码风险透视 (红橙高亮)", "✏️ 在线交互编辑"],
+                horizontal=True,
+                label_visibility="collapsed",
+                key="center_code_mode"
+            )
+        with sub_c2:
+            st.markdown(f'<div style="text-align: right; font-size: 0.76rem; color: #94a3b8; line-height: 28px; font-family: monospace;">📄 {cur_fname} · {code_lines} 行</div>', unsafe_allow_html=True)
 
         # 源码展示区
         if "源码透视" in code_view_mode:
