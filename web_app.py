@@ -586,13 +586,56 @@ st.markdown("""
         visibility: hidden !important;
     }
 
-    /* 页面主体容器 */
+    /* 彻底锁定浏览器窗口，禁止全局页面滚动，打造专业 IDE 固定视口 */
+    html, body {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    [data-testid="stAppViewContainer"], .main {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+    }
     .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1.5rem !important;
-        padding-left: 1.5rem !important;
-        padding-right: 1.5rem !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+        padding-top: 0.6rem !important;
+        padding-bottom: 0.4rem !important;
+        padding-left: 1.2rem !important;
+        padding-right: 1.2rem !important;
         max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 切断子容器的滚动链，防止局部滚动到底部后带动全局滑动 */
+    div[data-testid="stVerticalBlockBorderWrapper"] > div,
+    [data-testid="column"] {
+        overscroll-behavior: contain !important;
+    }
+
+    /* 优雅精致的深色系独立滚动条 */
+    div[data-testid="stVerticalBlockBorderWrapper"] > div {
+        scrollbar-width: thin;
+        scrollbar-color: #334155 #0b1120;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] > div::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] > div::-webkit-scrollbar-track {
+        background: #0b1120;
+        border-radius: 4px;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] > div::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] > div::-webkit-scrollbar-thumb:hover {
+        background: #475569;
     }
 
     /* IDE 顶部导航状态栏 */
@@ -831,16 +874,19 @@ st.markdown("""
         margin-top: 6px;
     }
 
-    /* 左侧对话助手列弹性与置底吸附 */
-    [data-testid="column"]:first-child {
+    /* 三列布局各自定高与底边对齐 */
+    [data-testid="column"]:first-child,
+    [data-testid="column"]:nth-child(2),
+    [data-testid="column"]:nth-child(3) {
         display: flex !important;
         flex-direction: column !important;
-        min-height: calc(100vh - 120px) !important;
+        height: calc(100vh - 84px) !important;
+        max-height: calc(100vh - 84px) !important;
     }
     [data-testid="column"]:first-child [data-testid="stChatInput"] {
         margin-top: auto !important;
         position: sticky !important;
-        bottom: 8px !important;
+        bottom: 2px !important;
         z-index: 99 !important;
         border-radius: 8px !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
@@ -931,9 +977,10 @@ st.markdown("""
         background: rgba(15, 23, 42, 0.45);
         border: 1.5px dashed rgba(148, 163, 184, 0.25);
         border-radius: 12px;
-        padding: 44px 24px;
-        margin: 10px 0;
-        min-height: 480px;
+        padding: 24px 20px;
+        margin: 6px 0;
+        height: 430px;
+        box-sizing: border-box;
     }
     .empty-state-icon {
         font-size: 2.8rem;
@@ -1443,8 +1490,8 @@ with col_left:
             return f"✔ **[成果输出 Output]**: 代码质量评估与缺陷看板聚合就绪"
         return f"● {step.get('title', '处理中')}"
 
-    # 对话流容器 (高度 560px，极致清爽的沉浸式对话)
-    chat_box = st.container(height=560)
+    # 对话流容器 (高度 490px，配合固定页面视口独立平滑滚动)
+    chat_box = st.container(height=490)
     with chat_box:
         # 1. 历史消息渲染
         for msg in st.session_state.chat_messages:
@@ -1780,11 +1827,20 @@ with col_center:
                 st.rerun()
 
         # 2. 紧贴代码顶部的视图模式切换与状态条
-        sub_c1, sub_c2 = st.columns([5.5, 3.5], gap="small")
+        has_diff = bool(
+            st.session_state.baseline_code
+            and st.session_state.active_code.strip() != st.session_state.baseline_code.strip()
+        )
+
+        sub_c1, sub_c2 = st.columns([6.8, 3.2], gap="small")
         with sub_c1:
+            view_modes = ["💻 源代码检视", "✏️ 在线交互编辑"]
+            if has_diff:
+                view_modes.append("🔀 修改差异对比 (Diff)")
+            view_modes.append("🧪 终端沙箱")
             code_view_mode = st.radio(
                 "视图模式",
-                ["💻 源代码检视 (标准代码视图)", "✏️ 在线交互编辑"],
+                view_modes,
                 horizontal=True,
                 label_visibility="collapsed",
                 key="center_code_mode"
@@ -1792,47 +1848,38 @@ with col_center:
         with sub_c2:
             st.markdown(f'<div style="text-align: right; font-size: 0.76rem; color: #94a3b8; line-height: 28px; font-family: monospace;">📄 {cur_fname} · {code_lines} 行</div>', unsafe_allow_html=True)
 
-        # 若已完成审查，顶部显示显眼的自动修复成功状态通知横幅
+        # 若已完成审查，顶部显示显眼的自动修复成功状态通知横幅 (紧凑型)
         if st.session_state.reviewed:
             st.markdown("""
-<div style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1.5px solid #10b981; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+<div style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1.5px solid #10b981; border-radius: 8px; padding: 6px 12px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
     <div>
-        <span style="color: #4ade80; font-weight: 700; font-size: 0.92rem;">🎉 AI 审查完毕：已直接在下方源码中修复全部风险隐患！</span><br/>
-        <span style="color: #94a3b8; font-size: 0.78rem;">所有除零崩溃、未释放文件句柄、空序列越界与裸 except 均已自动应用防御性重构代码。右侧已列出排查出的历史风险点。</span>
+        <span style="color: #4ade80; font-weight: 700; font-size: 0.88rem;">🎉 AI 审查完毕：已直接在下方源码中修复全部风险隐患！</span>
+        <span style="color: #94a3b8; font-size: 0.75rem; margin-left: 8px;">除零、未关句柄、越界与裸 except 均已自动应用防御性重构代码。</span>
     </div>
-    <span style="background: #059669; color: #fff; font-size: 0.74rem; padding: 3px 8px; border-radius: 4px; font-weight: 600;">✔ 已直接修复</span>
+    <span style="background: #059669; color: #fff; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; font-weight: 600;">✔ 已直接修复</span>
 </div>
 """, unsafe_allow_html=True)
 
-        # 源码展示区
-        if "标准代码" in code_view_mode:
-            st.code(st.session_state.active_code, language="python", line_numbers=True)
-            if st.session_state.reviewed:
-                st.caption("💡 提示：当前代码为 AI 审查并自动修复后的安全健壮版本，您可直接点击上方【💾 导出修改后源码】下载或展开下方【🔀 修改前后对比 Diff】。")
-            else:
-                st.caption("💡 提示：在左侧点击【⚡ 启动全面代码审查】后，AI 将直接在当前源码中修复全部已知风险！")
-        else:
-            edited_code = st.text_area(
-                "编辑代码",
-                value=st.session_state.active_code,
-                height=560,
-                key="center_source_editor",
-                label_visibility="collapsed"
-            )
-            if edited_code != st.session_state.active_code:
-                st.session_state.active_code = edited_code
-
-        # 底部折叠抽屉：修改前后对比 Diff Viewer (展示修改前基线 vs 当前源码)
-        has_diff = bool(
-            st.session_state.baseline_code
-            and st.session_state.active_code.strip() != st.session_state.baseline_code.strip()
-        )
-
-        with st.expander(f"🔀 修改前后对比 Diff {'(已在上方源码中直接应用修改 · 点击展开差异对比)' if has_diff else '(查看修改差异对比)'}", expanded=has_diff):
-            if has_diff:
+        # 核心代码视窗容器 (严格固定高度，超出仅容器内部垂直滑动，页面整体与其它区域完全纹丝不动)
+        code_box_height = 450 if st.session_state.reviewed else 490
+        code_box = st.container(height=code_box_height)
+        with code_box:
+            if "源代码检视" in code_view_mode:
+                st.code(st.session_state.active_code, language="python", line_numbers=True)
+            elif "在线交互编辑" in code_view_mode:
+                edited_code = st.text_area(
+                    "编辑代码",
+                    value=st.session_state.active_code,
+                    height=code_box_height - 30,
+                    key="center_source_editor",
+                    label_visibility="collapsed"
+                )
+                if edited_code != st.session_state.active_code:
+                    st.session_state.active_code = edited_code
+            elif "修改差异对比" in code_view_mode:
                 diff_c1, diff_c2 = st.columns([2.0, 1.0])
                 with diff_c1:
-                    st.info("💡 修复已直接在上方源码中修改生效，下方为针对原始问题代码的差异补丁：")
+                    st.info("💡 修复已直接在源码中生效，以下为针对原始问题代码的差异补丁：")
                 with diff_c2:
                     if st.button("↩️ 撤销修改 (恢复原始代码)", use_container_width=True):
                         st.session_state.active_code = st.session_state.baseline_code
@@ -1852,16 +1899,17 @@ with col_center:
                     st.code(patch_text, language="diff")
                 else:
                     st.info("当前源码与基准代码完全一致。")
-            else:
-                st.caption("💡 尚未在源码中产生修改差异。请在左侧点击【⚡ 启动全面代码审查】，审查后将自动在源码中修改并在上方提供【💾 导出修改后源码】。")
+            elif "终端沙箱" in code_view_mode:
+                t_output = st.session_state.get("test_sandbox_output", "")
+                if t_output:
+                    st.markdown(f'<div class="terminal-window">>_ 沙箱执行输出：\n\n{t_output}</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown('<div class="terminal-window">>_ 终端就绪 (等待代码审查与沙箱运行验证任务...)</div>', unsafe_allow_html=True)
 
-        # 底部折叠抽屉：沙箱终端
-        with st.expander("🧪 终端沙箱输出 (Terminal)", expanded=False):
-            t_output = st.session_state.get("test_sandbox_output", "")
-            if t_output:
-                st.markdown(f'<div class="terminal-window">>_ 沙箱执行输出：\n\n{t_output}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown('<div class="terminal-window">>_ 终端就绪 (等待代码审查与沙箱运行验证任务...)</div>', unsafe_allow_html=True)
+        if st.session_state.reviewed:
+            st.caption("💡 提示：当前代码为 AI 审查并自动修复后的安全健壮版本，代码下滑仅在当前代码视窗内滚动，页面整体固定。")
+        else:
+            st.caption("💡 提示：在左侧点击【⚡ 启动全面代码审查】后，AI 将直接在当前源码中修复全部已知风险！")
 
 
 # -------------------------------------------------------------
@@ -1990,8 +2038,8 @@ with col_right:
                 continue
             filtered_issues.append(iss)
 
-        # 风险卡片纵向滚动列表 (高度 540px)
-        risk_box = st.container(height=540)
+        # 风险卡片纵向滚动列表 (高度 480px，配合固定页面视口独立平滑滚动)
+        risk_box = st.container(height=480)
         with risk_box:
             # 顶部提示状态条
             st.markdown("""
