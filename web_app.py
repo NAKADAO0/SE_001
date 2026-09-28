@@ -470,34 +470,6 @@ col_agent, col_editor = st.columns([3.2, 6.8], gap="medium")
 with col_agent:
     st.markdown("#### 🤖 AI Copilot 助手")
 
-    # 快捷载入外部代码折叠抽屉
-    with st.expander("📥 快速粘贴 / 上传外部代码", expanded=False):
-        st.caption("提示：既可以直接粘贴源码，也可以上传 .py 文件，装载后自动同步到右侧编辑器。")
-        quick_paste = st.text_area(
-            "粘贴 Python 代码 (Ctrl+V)",
-            value="",
-            height=140,
-            placeholder="在此处粘贴代码...\ndef example():\n    pass",
-        )
-        quick_file = st.file_uploader("或选择本地 .py 文件", type=["py"], key="left_uploader")
-
-        if st.button("🚀 同步至右侧代码工作区", type="primary", use_container_width=True):
-            if quick_file is not None:
-                new_c = quick_file.read().decode("utf-8", errors="replace")
-                st.session_state.active_code = new_c
-                st.session_state.baseline_code = new_c
-                st.session_state.active_file_name = quick_file.name
-                st.session_state.refactored_code = None
-                st.toast("文件已同步至右侧代码区！", icon="✅")
-                st.rerun()
-            elif quick_paste.strip():
-                st.session_state.active_code = quick_paste
-                st.session_state.baseline_code = quick_paste
-                st.session_state.active_file_name = "pasted_source.py"
-                st.session_state.refactored_code = None
-                st.toast("粘贴代码已同步至右侧代码区！", icon="✅")
-                st.rerun()
-
     # 辅助函数：格式化思考步骤
     def format_step_badge(step: Dict[str, Any]) -> str:
         s_type = step.get("type")
@@ -521,8 +493,8 @@ with col_agent:
             return f"✔ **[Phase 3] 校验完成**: 最终结果聚合"
         return f"● {step.get('title', '处理中')}"
 
-    # 对话流容器 (固定滚动高度，展示全部历史、思考盒与结果)
-    chat_box = st.container(height=520)
+    # 对话流容器 (高度拉满至 600px，极致清爽的沉浸式对话)
+    chat_box = st.container(height=600)
     with chat_box:
         # 1. 历史消息渲染
         for msg in st.session_state.chat_messages:
@@ -648,72 +620,59 @@ with col_agent:
 
             st.rerun()
 
-    # 斜杠指令自动展开菜单 (输入 / 触发)
-    show_menu = st.session_state.get("show_slash_menu", False)
-    with st.expander("⚡ 斜杠功能指令 (在下方输入 / 自动展开)", expanded=show_menu):
-        sc1, sc2 = st.columns(2)
-        with sc1:
-            if st.button("⚡ /review (代码审计)", use_container_width=True):
-                st.session_state.pending_task = {
-                    "prompt": "/review: 请对右侧代码进行全面安全与漏洞审查",
-                    "task_type": "review"
-                }
-                st.session_state.show_slash_menu = False
-                st.rerun()
-            if st.button("🛠️ /refactor (代码重构)", use_container_width=True):
-                st.session_state.pending_task = {
-                    "prompt": "/refactor: 请对右侧代码消除坏味道，应用合适设计模式并输出完整重构代码",
-                    "task_type": "refactor"
-                }
-                st.session_state.show_slash_menu = False
-                st.rerun()
-        with sc2:
-            if st.button("🧪 /test (单测闭环)", use_container_width=True):
-                st.session_state.pending_task = {
-                    "prompt": "/test: 请为右侧代码编写 pytest 并在沙箱中自运行验证",
-                    "task_type": "test"
-                }
-                st.session_state.show_slash_menu = False
-                st.rerun()
-            if st.button("📖 /explain (算法解释)", use_container_width=True):
-                st.session_state.pending_task = {
-                    "prompt": "/explain: 请深入解构右侧代码的算法逻辑与时空复杂度",
-                    "task_type": "explain"
-                }
-                st.session_state.show_slash_menu = False
-                st.rerun()
-
-    # 置底输入框
-    input_text = st.chat_input("输入对话或斜杠指令 (输入 / 唤出菜单，或直接输入修改需求)...")
-    if input_text:
-        cleaned = input_text.strip()
-        if cleaned == "/":
-            st.session_state.show_slash_menu = True
-            st.toast("已展开斜杠功能菜单！", icon="⚡")
-            st.rerun()
-        elif cleaned.startswith("/"):
-            st.session_state.show_slash_menu = False
-            task_type = "review"
-            if cleaned.startswith("/review"):
-                task_type = "review"
-            elif cleaned.startswith("/refactor"):
-                task_type = "refactor"
-            elif cleaned.startswith("/test"):
-                task_type = "test"
-            elif cleaned.startswith("/explain"):
-                task_type = "explain"
+    # 4 个漂浮在输入框上方的快捷指令按钮 (一键触达核心能力)
+    btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4, gap="small")
+    with btn_col1:
+        if st.button("⚡ /review 审查", use_container_width=True, help="全面排查代码除零、未关文件、空序列等缺陷"):
             st.session_state.pending_task = {
-                "prompt": cleaned,
-                "task_type": task_type
-            }
-            st.rerun()
-        else:
-            st.session_state.show_slash_menu = False
-            st.session_state.pending_task = {
-                "prompt": f"针对当前右侧代码，我的具体修改需求是：{cleaned}",
+                "prompt": "/review: 请对右侧代码进行全面安全与漏洞审查",
                 "task_type": "review"
             }
             st.rerun()
+    with btn_col2:
+        if st.button("🛠️ /refactor 重构", use_container_width=True, help="消除坏味道、引入策略模式与防御编程"):
+            st.session_state.pending_task = {
+                "prompt": "/refactor: 请对右侧代码消除坏味道，应用合适设计模式并输出完整重构代码",
+                "task_type": "refactor"
+            }
+            st.rerun()
+    with btn_col3:
+        if st.button("🧪 /test 测试", use_container_width=True, help="全分支 pytest 编写并在独立沙箱中自闭环运行"):
+            st.session_state.pending_task = {
+                "prompt": "/test: 请为右侧代码编写 pytest 并在沙箱中自运行验证",
+                "task_type": "test"
+            }
+            st.rerun()
+    with btn_col4:
+        if st.button("📖 /explain 解释", use_container_width=True, help="逐步解构算法执行流与渐进式时空复杂度"):
+            st.session_state.pending_task = {
+                "prompt": "/explain: 请深入解构右侧代码的算法逻辑与时空复杂度",
+                "task_type": "explain"
+            }
+            st.rerun()
+
+    # 置底输入框：支持自然语言自由交互与斜杠指令手动输入
+    input_text = st.chat_input("输入修改需求（或点击上方4个指令按钮快速执行）...")
+    if input_text:
+        cleaned = input_text.strip()
+        task_type = "review"
+        if cleaned.startswith("/review"):
+            task_type = "review"
+        elif cleaned.startswith("/refactor"):
+            task_type = "refactor"
+        elif cleaned.startswith("/test"):
+            task_type = "test"
+        elif cleaned.startswith("/explain"):
+            task_type = "explain"
+        elif cleaned == "/":
+            task_type = "review"
+            cleaned = "/review: 请审查当前代码"
+
+        st.session_state.pending_task = {
+            "prompt": cleaned if cleaned.startswith("/") else f"针对当前右侧代码，我的具体修改需求是：{cleaned}",
+            "task_type": task_type
+        }
+        st.rerun()
 
 
 # -------------------------------------------------------------
