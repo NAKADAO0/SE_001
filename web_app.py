@@ -893,27 +893,29 @@ st.markdown("""
         margin-top: 6px;
     }
 
-    /* 三列布局全高贯通，建立垂直弹性流 */
+    /* 三列布局全高贯通，直接绑定视口高度，消除祖先节点高度截断 */
     [data-testid="column"] {
         display: flex !important;
         flex-direction: column !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        height: calc(100vh - 66px) !important;
+        min-height: calc(100vh - 66px) !important;
+        max-height: calc(100vh - 66px) !important;
+        box-sizing: border-box !important;
+        position: relative !important;
     }
-    [data-testid="column"] > div[data-testid="stVerticalBlock"] {
+    [data-testid="column"] > div {
+        height: 100% !important;
         display: flex !important;
         flex-direction: column !important;
-        height: 100% !important;
-        flex: 1 1 0% !important;
-        justify-content: flex-start !important;
+        box-sizing: border-box !important;
     }
 
-    /* 左侧列：对话框弹性撑满中间剩余高度，审查按钮与输入框绝对沉底 */
+    /* 【左侧栏】：对话容器按视口高度自适应拉伸，审查按钮与输入框死死钉在页面底端固定 */
     [data-testid="column"]:first-child div[data-testid="stVerticalBlockBorderWrapper"] {
-        flex: 1 1 0% !important;
-        height: 100% !important;
-        max-height: none !important;
-        min-height: 150px !important;
+        height: calc(100vh - 176px) !important;
+        max-height: calc(100vh - 176px) !important;
+        min-height: 200px !important;
+        box-sizing: border-box !important;
     }
     [data-testid="column"]:first-child div[data-testid="stVerticalBlockBorderWrapper"] > div {
         height: 100% !important;
@@ -934,17 +936,24 @@ st.markdown("""
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
     }
 
-    /* 中间列：空状态或代码视窗自适应伸展，底部操作按钮绝对沉底 */
+    /* 【中间栏】：空状态卡片按视口高度自适应拉伸，底部按钮行死死钉在页面底端固定 */
+    [data-testid="column"]:nth-child(2) .empty-state-box {
+        height: calc(100vh - 162px) !important;
+        max-height: calc(100vh - 162px) !important;
+        min-height: 220px !important;
+        margin: 6px 0 10px 0 !important;
+    }
     .empty-state-box ~ div[data-testid="stHorizontalBlock"],
-    [data-testid="column"]:nth-child(2) > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:last-child {
+    [data-testid="column"]:nth-child(2) div[data-testid="stHorizontalBlock"]:last-child {
         margin-top: auto !important;
         margin-bottom: 2px !important;
     }
+    /* 中间栏有代码时：代码视窗容器按视口高度自适应拉伸 */
     [data-testid="column"]:nth-child(2) div[data-testid="stVerticalBlockBorderWrapper"] {
-        flex: 1 1 0% !important;
-        height: 100% !important;
-        max-height: none !important;
+        height: calc(100vh - 215px) !important;
+        max-height: calc(100vh - 215px) !important;
         min-height: 220px !important;
+        box-sizing: border-box !important;
     }
     [data-testid="column"]:nth-child(2) div[data-testid="stVerticalBlockBorderWrapper"] > div {
         height: 100% !important;
@@ -952,12 +961,18 @@ st.markdown("""
         overflow-y: auto !important;
     }
 
-    /* 右侧列：内容区自适应撑满 */
-    [data-testid="column"]:nth-child(3) div[data-testid="stVerticalBlockBorderWrapper"] {
-        flex: 1 1 0% !important;
-        height: 100% !important;
-        max-height: none !important;
+    /* 【右侧栏】：空状态与风险列表按视口高度拉伸到底端 */
+    [data-testid="column"]:nth-child(3) .empty-state-box {
+        height: calc(100vh - 110px) !important;
+        max-height: calc(100vh - 110px) !important;
         min-height: 220px !important;
+        margin: 6px 0 10px 0 !important;
+    }
+    [data-testid="column"]:nth-child(3) div[data-testid="stVerticalBlockBorderWrapper"] {
+        height: calc(100vh - 215px) !important;
+        max-height: calc(100vh - 215px) !important;
+        min-height: 220px !important;
+        box-sizing: border-box !important;
     }
     [data-testid="column"]:nth-child(3) div[data-testid="stVerticalBlockBorderWrapper"] > div {
         height: 100% !important;
