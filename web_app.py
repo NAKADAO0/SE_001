@@ -613,6 +613,33 @@ st.markdown("""
         flex-direction: column !important;
     }
 
+    /* 保证在审查运行中 (running 状态) 页面其他区域绝不变暗、不降低透明度，持续保持滚动与交互能力 */
+    .stApp[data-test-script-state="running"],
+    .stApp[data-test-script-state="running"] *,
+    div[data-testid="stAppViewContainer"][data-test-script-state="running"],
+    div[data-testid="stAppViewContainer"][data-test-script-state="running"] * {
+        opacity: 1 !important;
+        filter: none !important;
+    }
+    .stApp[data-test-script-state="running"] .block-container,
+    .stApp[data-test-script-state="running"] div[data-testid="stVerticalBlockBorderWrapper"],
+    .stApp[data-test-script-state="running"] div[data-testid="stVerticalBlockBorderWrapper"] > div,
+    .stApp[data-test-script-state="running"] div[data-testid="stHorizontalBlock"],
+    .stApp[data-test-script-state="running"] [data-testid="stColumn"],
+    .stApp[data-test-script-state="running"] [data-testid="column"] {
+        pointer-events: auto !important;
+        opacity: 1 !important;
+        filter: none !important;
+    }
+    /* 彻底消除运行态半透明遮罩 */
+    div[data-testid="stDecoration"],
+    .stApp::before,
+    .stApp::after,
+    .main::before,
+    .main::after {
+        display: none !important;
+    }
+
     /* 顶层主垂直块充满视口，完美容纳：顶部导航栏 + 上层 Body 主体 + 最底端 Dock 操作坞 */
     .block-container > div[data-testid="stVerticalBlock"] {
         display: flex !important;
@@ -1006,9 +1033,9 @@ st.markdown("""
         padding: 0 !important;
     }
     [data-testid="column"]:first-child div[data-testid="stButton"] button {
-        height: 36px !important;
-        min-height: 36px !important;
-        max-height: 36px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        max-height: 44px !important;
         border-radius: 9999px !important; /* Claude 经典的 Pill 药丸胶囊圆角 */
         background: rgba(30, 41, 59, 0.7) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -1402,6 +1429,249 @@ st.markdown("""
         font-weight: 800;
         box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
     }
+
+    /* 工作台：主体占满可用高度，三栏操作区对齐视口底边。 */
+    [data-testid="stAppViewContainer"], .main {
+        background: radial-gradient(circle at 50% -22%, #17243d 0%, #0b1323 45%, #080d18 100%) !important;
+    }
+    .block-container {
+        padding: 14px 18px 12px !important;
+    }
+    .block-container > [data-testid="stVerticalBlock"] {
+        height: calc(100vh - 26px) !important;
+        max-height: calc(100vh - 26px) !important;
+        min-height: 0 !important;
+        gap: 10px !important;
+        justify-content: flex-start !important;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:has(.ide-header) {
+        flex: 0 0 56px !important;
+        min-height: 56px !important;
+        max-height: 56px !important;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) {
+        flex: 1 1 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        align-items: stretch !important;
+    }
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:last-of-type {
+        flex: 0 0 76px !important;
+        height: 76px !important;
+        min-height: 76px !important;
+        max-height: 76px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        align-items: stretch !important;
+        overflow: visible !important;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) > [data-testid="stColumn"] {
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: none !important;
+        padding: 14px !important;
+        border: 1px solid #27344c;
+        border-radius: 15px;
+        background: linear-gradient(155deg, rgba(19, 30, 49, 0.98), rgba(11, 19, 34, 0.98));
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.16), inset 0 1px rgba(255, 255, 255, 0.035);
+        overflow: hidden;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) > [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
+        min-height: 0 !important;
+        height: 100% !important;
+        gap: 9px !important;
+        overflow: hidden !important;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type > [data-testid="stColumn"] {
+        min-height: 0 !important;
+        padding: 7px 10px !important;
+        border: 1px solid #304057;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #18253b, #111c30);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18), inset 0 1px rgba(255, 255, 255, 0.05);
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type > [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
+        height: 100% !important;
+        min-height: 0 !important;
+        justify-content: center !important;
+    }
+    .ide-header {
+        min-height: 56px;
+        margin: 0;
+        padding: 9px 16px;
+        border-color: #304057;
+        border-radius: 13px;
+        background: linear-gradient(110deg, #172942, #111b30 70%);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.17), inset 3px 0 #38bdf8;
+    }
+    .ide-badge {
+        background: rgba(56, 189, 248, 0.14);
+        border: 1px solid rgba(56, 189, 248, 0.27);
+        color: #7dd3fc;
+        border-radius: 999px;
+    }
+    .ide-badge[style] {
+        background: rgba(16, 185, 129, 0.14) !important;
+        border-color: rgba(16, 185, 129, 0.28);
+        color: #6ee7b7;
+    }
+    .col-header {
+        min-height: 36px;
+        margin: 0;
+        padding: 0 1px 10px;
+        border-bottom-color: #2b3b52;
+    }
+    .col-header-title { font-size: 0.98rem; letter-spacing: -0.01em; }
+    .st-key-chat_box,
+    .st-key-code_box,
+    .st-key-risk_box {
+        flex: 1 1 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        border: 1px solid #25344b;
+        border-radius: 11px;
+        background: #0c1525;
+        overflow: auto !important;
+        scrollbar-width: thin;
+        scrollbar-color: #455775 transparent;
+    }
+    .empty-state-box {
+        flex: 1 1 0 !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        padding: 24px !important;
+        border: 1px dashed #334761;
+        border-radius: 11px;
+        background: radial-gradient(circle at 50% 34%, #172941 0%, #0d182a 65%);
+        text-align: center;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) > [data-testid="stColumn"] [data-testid="stElementContainer"]:has(.empty-state-box),
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) > [data-testid="stColumn"] [data-testid="stElementContainer"]:has(.empty-state-box) > [data-testid="stMarkdown"],
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) > [data-testid="stColumn"] [data-testid="stElementContainer"]:has(.empty-state-box) [data-testid="stMarkdownContainer"] {
+        flex: 1 1 0 !important;
+        height: 100% !important;
+        min-height: 0 !important;
+    }
+    .empty-state-icon {
+        width: 68px;
+        height: 68px;
+        display: grid;
+        place-items: center;
+        margin-bottom: 18px;
+        border: 1px solid #38516e;
+        border-radius: 20px;
+        background: rgba(56, 189, 248, 0.09);
+        font-size: 2rem;
+    }
+    .empty-state-desc { margin-bottom: 0; }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type [data-testid="stButton"] button,
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type [data-testid="stDownloadButton"] button,
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type [data-testid="stPopover"] > button {
+        height: 44px !important;
+        min-height: 44px !important;
+        max-height: 44px !important;
+        border-radius: 9px !important;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type [data-testid="stChatInput"] {
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type [data-testid="stChatInput"] > div {
+        min-height: 44px !important;
+        border-color: #3c506d;
+        border-radius: 9px;
+        background: #0c1627;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type [data-testid="stChatInputTextArea"] {
+        height: 44px !important;
+        min-height: 44px !important;
+        max-height: 44px !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type [data-testid="stButton"] button[kind="primary"] {
+        background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+        border-color: #4493da !important;
+        color: white !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.24) !important;
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type [data-testid="stButton"] button[kind="primary"]:hover {
+        background: linear-gradient(135deg, #0ea5e9, #3b82f6) !important;
+        transform: translateY(-1px);
+    }
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type [data-testid="stButton"] button:focus-visible,
+    .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type [data-testid="stPopover"] > button:focus-visible {
+        outline: 2px solid #7dd3fc !important;
+        outline-offset: 2px;
+    }
+    @media (max-width: 1300px) {
+        .ide-title { font-size: 1rem; white-space: nowrap; }
+        .ide-title-box { flex-shrink: 0; }
+        .ide-meta-item:last-child { display: none; }
+        .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type button p {
+            font-size: 0.78rem !important;
+        }
+    }
+    @media (max-width: 1100px) {
+        .ide-meta-box { gap: 8px; }
+        .ide-badge:last-child { display: none; }
+        .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) > [data-testid="stColumn"] { padding: 10px !important; }
+        .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type > [data-testid="stColumn"] { padding: 7px !important; }
+    }
+    @media (max-width: 700px) {
+        html, body, [data-testid="stAppViewContainer"], .main {
+            height: auto !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        .block-container {
+            height: auto !important;
+            max-height: none !important;
+            min-height: 100vh !important;
+            overflow: visible !important;
+            padding: 12px !important;
+        }
+        .block-container > [data-testid="stVerticalBlock"] {
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
+        }
+        .ide-header { padding: 12px; }
+        .ide-meta-box, .ide-badge { display: none !important; }
+        .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type),
+        .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:last-of-type {
+            flex: none !important;
+            flex-direction: column !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+        }
+        .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) > [data-testid="stColumn"],
+        .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type > [data-testid="stColumn"] {
+            width: 100% !important;
+            flex: none !important;
+        }
+        .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) > [data-testid="stColumn"] {
+            height: 430px !important;
+            min-height: 430px !important;
+        }
+        .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) > [data-testid="stColumn"]:nth-child(2) {
+            height: 540px !important;
+        }
+        .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:not(:last-of-type) > [data-testid="stColumn"]:nth-child(3) {
+            height: 490px !important;
+        }
+        .block-container > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:last-of-type > [data-testid="stColumn"] {
+            min-height: 70px !important;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1449,14 +1719,10 @@ if "chat_messages" not in st.session_state:
         {
             "role": "assistant",
             "content": (
-                "👋 **你好！我是基于主流框架 LangChain 驱动的专业代码审查智能体 (CodeReviewerAgent)**。\n\n"
-                "🎯 **核心使命**：深入分析代码质量、排查隐蔽运行时崩溃风险与漏洞、输出高质量整改建议。\n\n"
-                "🔄 **Agent 执行闭环 (ReAct 循环)**：\n"
-                "- 📥 **输入 (Input)**：接收目标源码与审查指令；\n"
-                "- 🧠 **推理 (Reasoning)**：制定审计计划，分析潜在风险点；\n"
-                "- ⚡ **工具调用 (Tools)**：自主调度 `read_file`、`lint_code` (AST代码解析) 与 `execute_python_code` (沙箱运行)；\n"
-                "- 💡 **成果输出 (Output)**：生成结构化缺陷诊断大屏与一键可采纳的修复建议！\n\n"
-                "👉 *点击下方快捷胶囊按钮或直接输入自然语言指令，即刻启动全量安全审查！*"
+                "👋 **你好，我是 CodeMate 代码审查助手。**\n\n"
+                "在中间栏载入 Python 文件，或直接把源码粘贴到下方输入框。"
+                "点击 **审查代码** 后，风险与修复建议会显示在右侧。\n\n"
+                "也可以输入 `/review`、`/refactor`、`/test` 或 `/explain`，告诉我你想做什么。"
             )
         }
     ]
@@ -1580,7 +1846,7 @@ def format_step_badge(step: Dict[str, Any]) -> str:
 with body_left:
     st.markdown('<div class="col-header"><span class="col-header-title">🤖 AI Copilot 助手</span><span style="font-size: 0.72rem; color: #94a3b8; font-family: monospace;">LangChain ReAct</span></div>', unsafe_allow_html=True)
 
-    chat_box = st.container(height=520)
+    chat_box = st.container(height=520, key="chat_box")
     with chat_box:
         # 1. 历史消息渲染
         for msg in st.session_state.chat_messages:
@@ -1763,21 +2029,17 @@ with body_center:
             and st.session_state.active_code.strip() != st.session_state.baseline_code.strip()
         )
 
-        sub_c1, sub_c2 = st.columns([6.8, 3.2], gap="small")
-        with sub_c1:
-            view_modes = ["💻 源代码检视", "✏️ 在线交互编辑"]
-            if has_diff:
-                view_modes.append("🔀 修改差异对比 (Diff)")
-            view_modes.append("🧪 终端沙箱")
-            code_view_mode = st.radio(
-                "视图模式",
-                view_modes,
-                horizontal=True,
-                label_visibility="collapsed",
-                key="center_code_mode"
-            )
-        with sub_c2:
-            st.markdown(f'<div style="text-align: right; font-size: 0.76rem; color: #94a3b8; line-height: 28px; font-family: monospace;">📄 {cur_fname} · {code_lines} 行</div>', unsafe_allow_html=True)
+        view_modes = ["💻 源码检视", "✏️ 在线编辑"]
+        if has_diff:
+            view_modes.append("🔀 差异对比 (Diff)")
+        view_modes.append("🧪 终端沙箱")
+        code_view_mode = st.radio(
+            "视图模式",
+            view_modes,
+            horizontal=True,
+            label_visibility="collapsed",
+            key="center_code_mode"
+        )
 
         if st.session_state.reviewed:
             st.markdown("""
@@ -1791,11 +2053,11 @@ with body_center:
 """, unsafe_allow_html=True)
 
         code_box_height = 430 if st.session_state.reviewed else 470
-        code_box = st.container(height=code_box_height)
+        code_box = st.container(height=code_box_height, key="code_box")
         with code_box:
-            if "源代码检视" in code_view_mode:
+            if "源码" in code_view_mode:
                 st.code(st.session_state.active_code, language="python", line_numbers=True)
-            elif "在线交互编辑" in code_view_mode:
+            elif "编辑" in code_view_mode:
                 edited_code = st.text_area(
                     "编辑代码",
                     value=st.session_state.active_code,
@@ -1805,7 +2067,7 @@ with body_center:
                 )
                 if edited_code != st.session_state.active_code:
                     st.session_state.active_code = edited_code
-            elif "修改差异对比" in code_view_mode:
+            elif "差异" in code_view_mode:
                 diff_c1, diff_c2 = st.columns([2.0, 1.0])
                 with diff_c1:
                     st.info("💡 修复已直接在源码中生效，以下为针对原始问题代码的差异补丁：")
@@ -1828,7 +2090,7 @@ with body_center:
                     st.code(patch_text, language="diff")
                 else:
                     st.info("当前源码与基准代码完全一致。")
-            elif "终端沙箱" in code_view_mode:
+            elif "终端" in code_view_mode:
                 t_output = st.session_state.get("test_sandbox_output", "")
                 if t_output:
                     st.markdown(f'<div class="terminal-window">>_ 沙箱执行输出：\n\n{t_output}</div>', unsafe_allow_html=True)
@@ -1850,7 +2112,7 @@ with body_right:
     <div class="empty-state-title">暂无风险内容</div>
     <div class="empty-state-desc">
         当前尚未执行代码审查。<br/>
-        请在最下方底栏载入源代码，并在左下角点击<strong>【⚡ 启动全面代码审查】</strong>。<br/><br/>
+        请在最下方底栏载入源代码，并在左下角点击<strong>【⚡ 审查代码】</strong>。<br/><br/>
         审查完成后，修复代码将直接应用在中间源码中，此处将呈现深度安全健康评分、致命崩溃与高危风险点。
     </div>
 </div>
@@ -1920,7 +2182,7 @@ with body_right:
                 continue
             filtered_issues.append(iss)
 
-        risk_box = st.container(height=390)
+        risk_box = st.container(height=390, key="risk_box")
         with risk_box:
             st.markdown("""
 <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 6px; padding: 5px 10px; margin-bottom: 8px; font-size: 0.78rem; color: #86efac; display: flex; align-items: center; justify-content: space-between;">
@@ -1978,15 +2240,17 @@ dock_left, dock_center, dock_right = st.columns([2.8, 4.4, 2.8], gap="small")
 with dock_left:
     dk_l1, dk_l2 = st.columns([1.1, 1.7], gap="small")
     with dk_l1:
-        if st.button("⚡ 启动代码审查", type="primary", use_container_width=True, help="启动 CodeReviewerAgent 深入排查代码质量、隐蔽Bug与安全漏洞"):
+        if st.button("⚡ 审查代码", type="primary", use_container_width=True, help="启动 CodeReviewerAgent 深入排查代码质量、隐蔽Bug与安全漏洞"):
             if not st.session_state.active_code:
-                p = Path("samples/demo_shopping_cart.py")
+                p = Path("samples/simple_demo.py")
+                if not p.exists():
+                    p = Path("samples/demo_shopping_cart.py")
                 if p.exists():
                     txt = p.read_text(encoding="utf-8")
                     st.session_state.active_code = txt
                     st.session_state.baseline_code = txt
-                    st.session_state.active_file_name = "samples/demo_shopping_cart.py"
-                    st.toast("已自动装载电商购物车样例并启动全面审查！", icon="🚀")
+                    st.session_state.active_file_name = p.name
+                    st.toast(f"已自动装载测试样例 [{p.name}] 并启动审查！", icon="🚀")
             st.session_state.pending_task = {
                 "prompt": "/review: 请对当前代码进行全维度的深度全面代码审查，深入排查除零、未关文件、越界与异常掩盖等隐患，并给出修复建议与对比代码",
                 "task_type": "review"
@@ -1994,7 +2258,7 @@ with dock_left:
             st.rerun()
 
     with dk_l2:
-        input_text = st.chat_input("输入修改要求，或直接粘贴 Python 源码...")
+        input_text = st.chat_input("提问或粘贴")
         if input_text:
             cleaned = input_text.strip()
             pasted = extract_pasted_code(cleaned)
@@ -2046,9 +2310,9 @@ with dock_left:
 # -------------------------------------------------------------
 with dock_center:
     if not st.session_state.active_code:
-        emp_c1, emp_c2 = st.columns([1, 1], gap="small")
+        emp_c1, emp_c2, emp_c3 = st.columns([1.1, 1.5, 1.4], gap="small")
         with emp_c1:
-            with st.popover("📂 上传本地 Python 源码", use_container_width=True):
+            with st.popover("📂 上传代码", use_container_width=True):
                 st.markdown("##### 📂 上传本地 .py 源码文件")
                 up_initial = st.file_uploader("选择 Python 文件", type=["py"], key="initial_source_upload")
                 if up_initial is not None:
@@ -2062,7 +2326,20 @@ with dock_center:
                     st.toast(f"已装载代码: {up_initial.name}", icon="📤")
                     st.rerun()
         with emp_c2:
-            if st.button("🚀 载入电商购物车样例", use_container_width=True, help="一键载入含除零、句柄未关缺陷的电商购物车代码"):
+            if st.button("🎯 简明测试样例", type="primary", use_container_width=True, help="一键载入约20行简明清晰的订单结算测试代码 (含除零/越界/句柄未关)"):
+                p = Path("samples/simple_demo.py")
+                if p.exists():
+                    txt = p.read_text(encoding="utf-8")
+                    st.session_state.active_code = txt
+                    st.session_state.baseline_code = txt
+                    st.session_state.active_file_name = "samples/simple_demo.py"
+                    st.session_state.reviewed = False
+                    st.session_state.analysis_result = None
+                    st.session_state.refactored_code = None
+                    st.toast("已载入简明极速演示样例！", icon="🎯")
+                    st.rerun()
+        with emp_c3:
+            if st.button("🛒 电商业务样例", use_container_width=True, help="载入电商购物车业务代码"):
                 p = Path("samples/demo_shopping_cart.py")
                 if p.exists():
                     txt = p.read_text(encoding="utf-8")
@@ -2072,12 +2349,12 @@ with dock_center:
                     st.session_state.reviewed = False
                     st.session_state.analysis_result = None
                     st.session_state.refactored_code = None
-                    st.toast("已载入电商购物车样例代码！", icon="🚀")
+                    st.toast("已载入电商购物车样例代码！", icon="🛒")
                     st.rerun()
     else:
         op_c1, op_c2, op_c3, op_c4 = st.columns([2.4, 2.4, 3.2, 0.8], gap="small")
         with op_c1:
-            with st.popover("📤 上传代码", use_container_width=True):
+            with st.popover("📤 上传文件", use_container_width=True):
                 st.markdown("##### 📤 上传本地 Python 源码")
                 up_replace = st.file_uploader("选择 .py 文件", type=["py"], key="replace_source_upload")
                 if up_replace is not None:
@@ -2092,12 +2369,13 @@ with dock_center:
                         st.toast(f"已更新源码: {up_replace.name}", icon="📤")
                         st.rerun()
         with op_c2:
-            with st.popover("📚 样例代码", use_container_width=True):
+            with st.popover("📚 样例", use_container_width=True):
                 st.markdown("##### 📚 快速载入测试样例")
                 sample_files = {
-                    "电商购物车 (含除零/泄漏)": "samples/demo_shopping_cart.py",
-                    "典型风险缺陷样例": "samples/buggy_code.py",
-                    "算法函数集": "samples/math_utils.py",
+                    "🎯 简明极速演示样例 (订单折扣结算)": "samples/simple_demo.py",
+                    "🛒 电商购物车业务样例 (含除零/泄漏)": "samples/demo_shopping_cart.py",
+                    "⚠️ 典型风险缺陷样例": "samples/buggy_code.py",
+                    "📐 算法函数集": "samples/math_utils.py",
                 }
                 sel_sample = st.selectbox("选择测试样例文件", list(sample_files.keys()))
                 if st.button("载入选中样例", use_container_width=True):
@@ -2116,7 +2394,7 @@ with dock_center:
                 out_filename += ".py"
             export_filename = f"reviewed_{out_filename}" if st.session_state.get("reviewed") else out_filename
             st.download_button(
-                label="💾 导出修改后源码",
+                label="💾 导出源码",
                 data=st.session_state.active_code,
                 file_name=export_filename,
                 mime="text/x-python",
@@ -2182,5 +2460,5 @@ with dock_right:
                 use_container_width=True
             )
     else:
-        st.markdown('<div style="height: 38px; display: flex; align-items: center; justify-content: center; background: #0f172a; border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 8px; font-size: 0.8rem; color: #64748b; user-select: none;">🛡️ 审计就绪 · 待审查后可在此导出报告</div>', unsafe_allow_html=True)
+        st.markdown('<div style="height: 44px; display: flex; align-items: center; justify-content: center; background: #0f172a; border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 8px; font-size: 0.8rem; color: #64748b; user-select: none;">🛡️ 审计就绪 · 待审查后可在此导出报告</div>', unsafe_allow_html=True)
 
