@@ -14,6 +14,7 @@ CodeMate AI IDE - 现代智能代码研发与审查工作台
 
 import sys
 import os
+import re
 import difflib
 import html
 from pathlib import Path
@@ -2393,6 +2394,183 @@ with dock_left:
                     "task_type": task_type
                 }
                 st.rerun()
+
+    # 3. 注入斜杠指令输入智能补全浮层 (Slash Command Autocomplete Menu)
+    components.html("""
+    <script>
+    (function() {
+        const pDoc = window.parent.document;
+        if (!pDoc) return;
+
+        // 若已存在则更新，不重复添加多个DOM节点
+        let menu = pDoc.getElementById('slash-command-popup-menu');
+        if (!menu) {
+            menu = pDoc.createElement('div');
+            menu.id = 'slash-command-popup-menu';
+            menu.style.cssText = `
+                position: fixed;
+                display: none;
+                background: #0f172a;
+                border: 1.5px solid #38bdf8;
+                border-radius: 8px;
+                box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 16px rgba(56, 189, 248, 0.3);
+                z-index: 99999999;
+                width: 330px;
+                padding: 6px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                box-sizing: border-box;
+            `;
+            pDoc.body.appendChild(menu);
+        }
+
+        const commands = [
+            { cmd: "/审查", icon: "⚡", title: "/审查 (或 /review)", desc: "全维漏洞排查与自动修复源码" },
+            { cmd: "/重构", icon: "🔨", title: "/重构 (或 /refactor)", desc: "消除坏味道、冗余与紧耦合设计" },
+            { cmd: "/测试", icon: "🧪", title: "/测试 (或 /test)", desc: "编写 pytest 单测并在沙箱自闭环运行" },
+            { cmd: "/解释", icon: "📖", title: "/解释 (或 /explain)", desc: "解构执行流程与渐进式时空复杂度" },
+            { cmd: "/帮助", icon: "💡", title: "/帮助 (或 /help)", desc: "展开助手指令与自然语言使用手册" }
+        ];
+
+        let activeIdx = 0;
+        let filteredCmds = [...commands];
+
+        function renderMenu() {
+            let html = `
+                <div style="font-size: 0.7rem; color: #94a3b8; padding: 2px 6px 6px 6px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                    <span style="font-weight: 600; color: #38bdf8;">⚡ 快捷指令 (上下键切换，Enter选择)</span>
+                    <span style="color: #64748b; font-size: 0.65rem;">ESC 关闭</span>
+                </div>
+                <div id="slash-item-list" style="max-height: 250px; overflow-y: auto; padding-top: 4px;">
+            `;
+            filteredCmds.forEach((item, idx) => {
+                const isAct = idx === activeIdx;
+                const bg = isAct ? "background: #1e293b; border-color: #38bdf8;" : "background: transparent; border-color: transparent;";
+                const titleColor = isAct ? "#38bdf8" : "#f1f5f9";
+                html += `
+                    <div class="slash-cmd-item" data-index="${idx}" style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; ${bg} transition: all 0.12s ease; margin-bottom: 2px; user-select: none;">
+                        <div style="font-size: 1.15rem; width: 24px; text-align: center;">${item.icon}</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 0.84rem; font-weight: 600; color: ${titleColor}; line-height: 1.2;">${item.title}</div>
+                            <div style="font-size: 0.7rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.desc}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            menu.innerHTML = html;
+
+            menu.querySelectorAll('.slash-cmd-item').forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    activeIdx = parseInt(el.getAttribute('data-index'));
+                    renderMenu();
+                });
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (filteredCmds[activeIdx]) {
+                        selectCommand(filteredCmds[activeIdx].cmd);
+                    }
+                });
+            });
+        }
+
+        function setReactInputValue(el, value) {
+            const valueSetter = Object.getOwnPropertyDescriptor(el, 'value')?.set;
+            const prototype = Object.getPrototypeOf(el);
+            const prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+            if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
+                prototypeValueSetter.call(el, value);
+            } else if (valueSetter) {
+                valueSetter.call(el, value);
+            } else {
+                el.value = value;
+            }
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        function selectCommand(cmd) {
+            const textarea = pDoc.querySelector('[data-testid="stChatInput"] textarea');
+            if (textarea) {
+                setReactInputValue(textarea, cmd + " ");
+                textarea.focus();
+            }
+            hideMenu();
+        }
+
+        function positionMenu(textarea) {
+            const rect = textarea.getBoundingClientRect();
+            menu.style.left = `${rect.left}px`;
+            menu.style.bottom = `${window.parent.innerHeight - rect.top + 8}px`;
+            menu.style.display = 'block';
+        }
+
+        function hideMenu() {
+            menu.style.display = 'none';
+            activeIdx = 0;
+        }
+
+        function attachListeners() {
+            const textarea = pDoc.querySelector('[data-testid="stChatInput"] textarea');
+            if (!textarea || textarea.__slash_attached) return;
+            textarea.__slash_attached = true;
+
+            textarea.addEventListener('input', () => {
+                const val = textarea.value.trim();
+                if (val.startsWith('/')) {
+                    const query = val.slice(1).trim().toLowerCase();
+                    filteredCmds = commands.filter(c => 
+                        c.cmd.toLowerCase().includes(query) || 
+                        c.title.toLowerCase().includes(query) ||
+                        c.desc.toLowerCase().includes(query)
+                    );
+                    if (filteredCmds.length === 0) {
+                        filteredCmds = commands;
+                    }
+                    activeIdx = 0;
+                    renderMenu();
+                    positionMenu(textarea);
+                } else {
+                    hideMenu();
+                }
+            });
+
+            textarea.addEventListener('keydown', (e) => {
+                if (menu.style.display === 'block') {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        activeIdx = (activeIdx + 1) % filteredCmds.length;
+                        renderMenu();
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        activeIdx = (activeIdx - 1 + filteredCmds.length) % filteredCmds.length;
+                        renderMenu();
+                    } else if (e.key === 'Enter' || e.key === 'Tab') {
+                        // 在菜单显示状态下按下 Enter，自动选中当前项并填入输入框！
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (filteredCmds[activeIdx]) {
+                            selectCommand(filteredCmds[activeIdx].cmd);
+                        }
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        hideMenu();
+                    }
+                }
+            });
+
+            pDoc.addEventListener('click', (e) => {
+                if (!menu.contains(e.target) && e.target !== textarea) {
+                    hideMenu();
+                }
+            });
+        }
+
+        setInterval(attachListeners, 500);
+    })();
+    </script>
+    """, height=0)
 
 
 # -------------------------------------------------------------
