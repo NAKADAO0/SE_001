@@ -603,12 +603,31 @@ st.markdown("""
         height: 100vh !important;
         max-height: 100vh !important;
         overflow: hidden !important;
-        padding-top: 0.6rem !important;
+        padding-top: 0.5rem !important;
         padding-bottom: 0.4rem !important;
         padding-left: 1.2rem !important;
         padding-right: 1.2rem !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* 顶层主垂直块与三列横向包裹块充满视口剩余空间，确保各列可直达屏幕底端 */
+    .block-container > div[data-testid="stVerticalBlock"] {
+        display: flex !important;
+        flex-direction: column !important;
+        height: calc(100vh - 0.9rem) !important;
+        max-height: calc(100vh - 0.9rem) !important;
+        flex: 1 !important;
+    }
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type {
+        display: flex !important;
+        flex-direction: row !important;
+        height: calc(100vh - 70px) !important;
+        max-height: calc(100vh - 70px) !important;
+        flex: 1 1 0% !important;
+        align-items: stretch !important;
     }
 
     /* 切断子容器的滚动链，防止局部滚动到底部后带动全局滑动 */
@@ -874,22 +893,76 @@ st.markdown("""
         margin-top: 6px;
     }
 
-    /* 三列布局各自定高与底边对齐 */
-    [data-testid="column"]:first-child,
-    [data-testid="column"]:nth-child(2),
-    [data-testid="column"]:nth-child(3) {
+    /* 三列布局全高贯通，建立垂直弹性流 */
+    [data-testid="column"] {
         display: flex !important;
         flex-direction: column !important;
-        height: calc(100vh - 84px) !important;
-        max-height: calc(100vh - 84px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
+    }
+    [data-testid="column"] > div[data-testid="stVerticalBlock"] {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        flex: 1 1 0% !important;
+        justify-content: flex-start !important;
+    }
+
+    /* 左侧列：对话框弹性撑满中间剩余高度，审查按钮与输入框绝对沉底 */
+    [data-testid="column"]:first-child div[data-testid="stVerticalBlockBorderWrapper"] {
+        flex: 1 1 0% !important;
+        height: 100% !important;
+        max-height: none !important;
+        min-height: 150px !important;
+    }
+    [data-testid="column"]:first-child div[data-testid="stVerticalBlockBorderWrapper"] > div {
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
+    }
+    [data-testid="column"]:first-child div[data-testid="stButton"]:has(button[kind="primary"]),
+    [data-testid="column"]:first-child div[data-testid="stVerticalBlockBorderWrapper"] ~ div[data-testid="stButton"] {
+        margin-top: auto !important;
+        margin-bottom: 4px !important;
     }
     [data-testid="column"]:first-child [data-testid="stChatInput"] {
-        margin-top: auto !important;
-        position: sticky !important;
-        bottom: 2px !important;
-        z-index: 99 !important;
+        margin-top: 0 !important;
+        margin-bottom: 2px !important;
+        position: static !important;
+        width: 100% !important;
         border-radius: 8px !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    /* 中间列：空状态或代码视窗自适应伸展，底部操作按钮绝对沉底 */
+    .empty-state-box ~ div[data-testid="stHorizontalBlock"],
+    [data-testid="column"]:nth-child(2) > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:last-child {
+        margin-top: auto !important;
+        margin-bottom: 2px !important;
+    }
+    [data-testid="column"]:nth-child(2) div[data-testid="stVerticalBlockBorderWrapper"] {
+        flex: 1 1 0% !important;
+        height: 100% !important;
+        max-height: none !important;
+        min-height: 220px !important;
+    }
+    [data-testid="column"]:nth-child(2) div[data-testid="stVerticalBlockBorderWrapper"] > div {
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
+    }
+
+    /* 右侧列：内容区自适应撑满 */
+    [data-testid="column"]:nth-child(3) div[data-testid="stVerticalBlockBorderWrapper"] {
+        flex: 1 1 0% !important;
+        height: 100% !important;
+        max-height: none !important;
+        min-height: 220px !important;
+    }
+    [data-testid="column"]:nth-child(3) div[data-testid="stVerticalBlockBorderWrapper"] > div {
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
     }
 
     /* Claude AI 风格快捷指令药丸按钮 (Quick Action Chips) */
@@ -969,18 +1042,20 @@ st.markdown("""
         gap: 6px;
     }
     .empty-state-box {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        background: rgba(15, 23, 42, 0.45);
-        border: 1.5px dashed rgba(148, 163, 184, 0.25);
-        border-radius: 12px;
-        padding: 24px 20px;
-        margin: 6px 0;
-        height: 430px;
-        box-sizing: border-box;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        background: rgba(15, 23, 42, 0.45) !important;
+        border: 1.5px dashed rgba(148, 163, 184, 0.25) !important;
+        border-radius: 12px !important;
+        padding: 30px 24px !important;
+        margin: 6px 0 10px 0 !important;
+        flex: 1 1 0% !important;
+        height: 100% !important;
+        min-height: 220px !important;
+        box-sizing: border-box !important;
     }
     .empty-state-icon {
         font-size: 2.8rem;
