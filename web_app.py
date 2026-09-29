@@ -2339,20 +2339,21 @@ with dock_left:
             st.rerun()
 
     with dk_l2:
-        # 1. 输入栏正上方指令提示条：明确告知支持 / 或自然语言，且支持鼠标一键点击填入药丸
+        # 1. 输入栏正上方指令提示条：明确清晰地展示所有可用快捷指令与说明，不依赖任何危险的外部 DOM 注入
         st.markdown("""
-<div style="font-size: 0.72rem; color: #94a3b8; display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; padding: 0 2px;">
-    <span>💡 快捷指令 (点击或输入/补全): 
-        <span onclick="(function(){ if (window.parent && window.parent.__CODEMATE_SLASH__) { window.parent.__CODEMATE_SLASH__.selectCommand('/审查'); } })()" style="cursor: pointer; color: #fbbf24; background: rgba(245, 158, 11, 0.18); border: 1px solid rgba(245, 158, 11, 0.4); padding: 1px 6px; border-radius: 4px; margin: 0 2px; font-weight: 600;" title="点击一键填入 /审查">⚡ /审查</span>
-        <span onclick="(function(){ if (window.parent && window.parent.__CODEMATE_SLASH__) { window.parent.__CODEMATE_SLASH__.selectCommand('/重构'); } })()" style="cursor: pointer; color: #38bdf8; background: rgba(56, 189, 248, 0.18); border: 1px solid rgba(56, 189, 248, 0.4); padding: 1px 6px; border-radius: 4px; margin: 0 2px; font-weight: 600;" title="点击一键填入 /重构">🔨 /重构</span>
-        <span onclick="(function(){ if (window.parent && window.parent.__CODEMATE_SLASH__) { window.parent.__CODEMATE_SLASH__.selectCommand('/测试'); } })()" style="cursor: pointer; color: #4ade80; background: rgba(74, 222, 128, 0.18); border: 1px solid rgba(74, 222, 128, 0.4); padding: 1px 6px; border-radius: 4px; margin: 0 2px; font-weight: 600;" title="点击一键填入 /测试">🧪 /测试</span>
-        <span onclick="(function(){ if (window.parent && window.parent.__CODEMATE_SLASH__) { window.parent.__CODEMATE_SLASH__.selectCommand('/解释'); } })()" style="cursor: pointer; color: #c084fc; background: rgba(192, 132, 252, 0.18); border: 1px solid rgba(192, 132, 252, 0.4); padding: 1px 6px; border-radius: 4px; margin: 0 2px; font-weight: 600;" title="点击一键填入 /解释">📖 /解释</span>
+<div style="font-size: 0.72rem; color: #94a3b8; display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; padding: 0 2px; user-select: none;">
+    <span>💡 快捷指令: 
+        <code style="color: #fbbf24; background: rgba(245, 158, 11, 0.18); border: 1px solid rgba(245, 158, 11, 0.4); padding: 1px 6px; border-radius: 4px; margin: 0 2px; font-weight: 600;">⚡ /审查</code>
+        <code style="color: #38bdf8; background: rgba(56, 189, 248, 0.18); border: 1px solid rgba(56, 189, 248, 0.4); padding: 1px 6px; border-radius: 4px; margin: 0 2px; font-weight: 600;">🔨 /重构</code>
+        <code style="color: #4ade80; background: rgba(74, 222, 128, 0.18); border: 1px solid rgba(74, 222, 128, 0.4); padding: 1px 6px; border-radius: 4px; margin: 0 2px; font-weight: 600;">🧪 /测试</code>
+        <code style="color: #c084fc; background: rgba(192, 132, 252, 0.18); border: 1px solid rgba(192, 132, 252, 0.4); padding: 1px 6px; border-radius: 4px; margin: 0 2px; font-weight: 600;">📖 /解释</code>
     </span>
+    <span style="color: #64748b; font-size: 0.68rem;">回车发送 或 自然语言</span>
 </div>
 """, unsafe_allow_html=True)
 
-        # 2. 置底输入框：提示清晰引导
-        input_text = st.chat_input("输入 /审查、/重构、/测试 或自然语言要求，亦可直接粘贴代码...")
+        # 2. 置底输入框：提示清晰引导，支持 /审查、/重构、/测试、/解释 或自然语言、粘贴代码
+        input_text = st.chat_input("输入 /审查、/重构、/测试、/解释 或自然语言要求，亦可直接粘贴代码...")
         if input_text:
             cleaned = input_text.strip()
             pasted = extract_pasted_code(cleaned)
@@ -2399,237 +2400,6 @@ with dock_left:
                     "task_type": task_type
                 }
                 st.rerun()
-
-    # 3. 注入斜杠指令输入智能补全浮层 (Slash Command Autocomplete Menu)
-    components.html("""
-    <script>
-    (function() {
-        try {
-            const win = window.parent || window;
-            const pDoc = win.document;
-            if (!pDoc) return;
-
-            // 全局单例管理器：确保父窗口全局唯一且状态时刻最新
-            if (!win.__CODEMATE_SLASH__) {
-                win.__CODEMATE_SLASH__ = {
-                    isOpen: false,
-                    activeIdx: 0,
-                    filteredCmds: [],
-                    menuEl: null,
-                    commands: [
-                        { cmd: "/审查", icon: "⚡", title: "/审查 (或 /review)", desc: "全维排查除零/泄漏/Bug并自动修复源码" },
-                        { cmd: "/重构", icon: "🔨", title: "/重构 (或 /refactor)", desc: "消除坏味道、冗余与紧耦合设计" },
-                        { cmd: "/测试", icon: "🧪", title: "/测试 (或 /test)", desc: "编写 pytest 单测并在沙箱自闭环运行" },
-                        { cmd: "/解释", icon: "📖", title: "/解释 (或 /explain)", desc: "解构执行流程与渐进式时空复杂度" },
-                        { cmd: "/帮助", icon: "💡", title: "/帮助 (或 /help)", desc: "展开助手指令与自然语言使用手册" }
-                    ],
-                    setReactInputValue: function(el, value) {
-                        try {
-                            const proto = win.HTMLTextAreaElement.prototype;
-                            const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
-                            if (nativeSetter) {
-                                nativeSetter.call(el, value);
-                            } else {
-                                el.value = value;
-                            }
-                            if (el._valueTracker) {
-                                el._valueTracker.setValue('');
-                            }
-                            el.dispatchEvent(new win.Event('input', { bubbles: true, composed: true }));
-                            el.dispatchEvent(new win.Event('change', { bubbles: true, composed: true }));
-                            el.focus();
-                            el.setSelectionRange(value.length, value.length);
-                        } catch(err) {
-                            el.value = value;
-                            el.focus();
-                        }
-                    },
-                    selectCommand: function(cmd) {
-                        const textarea = pDoc.querySelector('[data-testid="stChatInput"] textarea');
-                        if (textarea) {
-                            this.setReactInputValue(textarea, cmd + " ");
-                        }
-                        this.hideMenu();
-                    },
-                    renderMenu: function() {
-                        if (!this.menuEl) return;
-                        let html = `
-                            <div style="font-size: 0.72rem; color: #94a3b8; padding: 4px 8px 6px 8px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; user-select: none;">
-                                <span style="font-weight: 600; color: #38bdf8;">⚡ 快捷指令 (上下键切换，Enter直接补全)</span>
-                                <span style="color: #64748b; font-size: 0.65rem;">ESC 关闭</span>
-                            </div>
-                            <div id="slash-item-list" style="max-height: 250px; overflow-y: auto; padding-top: 4px;">
-                        `;
-                        this.filteredCmds.forEach((item, idx) => {
-                            const isAct = idx === this.activeIdx;
-                            const bg = isAct ? "background: #1e293b; border-color: #38bdf8;" : "background: transparent; border-color: transparent;";
-                            const titleColor = isAct ? "#38bdf8" : "#f1f5f9";
-                            html += `
-                                <div class="slash-cmd-item" data-index="${idx}" style="display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; ${bg} transition: all 0.1s ease; margin-bottom: 2px; user-select: none;">
-                                    <div style="font-size: 1.15rem; width: 24px; text-align: center;">${item.icon}</div>
-                                    <div style="flex: 1; min-width: 0;">
-                                        <div style="font-size: 0.84rem; font-weight: 600; color: ${titleColor}; line-height: 1.2;">${item.title}</div>
-                                        <div style="font-size: 0.7rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.desc}</div>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        html += `</div>`;
-                        this.menuEl.innerHTML = html;
-
-                        this.menuEl.querySelectorAll('.slash-cmd-item').forEach(el => {
-                            el.addEventListener('mouseenter', () => {
-                                win.__CODEMATE_SLASH__.activeIdx = parseInt(el.getAttribute('data-index'));
-                                win.__CODEMATE_SLASH__.renderMenu();
-                            });
-                            el.addEventListener('mousedown', (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                const idx = parseInt(el.getAttribute('data-index'));
-                                if (win.__CODEMATE_SLASH__.filteredCmds[idx]) {
-                                    win.__CODEMATE_SLASH__.selectCommand(win.__CODEMATE_SLASH__.filteredCmds[idx].cmd);
-                                }
-                            });
-                        });
-                    },
-                    showMenu: function(textarea) {
-                        if (!this.menuEl) return;
-                        const rect = textarea.getBoundingClientRect();
-                        this.menuEl.style.left = `${Math.max(10, rect.left)}px`;
-                        this.menuEl.style.bottom = `${win.innerHeight - rect.top + 8}px`;
-                        this.menuEl.style.display = 'block';
-                        this.isOpen = true;
-                        this.renderMenu();
-                    },
-                    hideMenu: function() {
-                        if (!this.menuEl) return;
-                        this.menuEl.style.display = 'none';
-                        this.isOpen = false;
-                        this.activeIdx = 0;
-                    }
-                };
-
-                // 创建 DOM 容器
-                let existingMenu = pDoc.getElementById('slash-command-popup-menu');
-                if (existingMenu) existingMenu.remove();
-
-                const menu = pDoc.createElement('div');
-                menu.id = 'slash-command-popup-menu';
-                menu.style.cssText = `
-                    position: fixed !important;
-                    display: none;
-                    background: #0f172a !important;
-                    border: 1.5px solid #38bdf8 !important;
-                    border-radius: 8px !important;
-                    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 16px rgba(56, 189, 248, 0.3) !important;
-                    z-index: 999999999 !important;
-                    width: 330px !important;
-                    padding: 6px !important;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-                    box-sizing: border-box !important;
-                `;
-                pDoc.body.appendChild(menu);
-                win.__CODEMATE_SLASH__.menuEl = menu;
-
-                // 全局键盘捕获劫持器 (Capture 捕获阶段拦截)
-                const onKeyDownCapture = function(e) {
-                    const slash = win.__CODEMATE_SLASH__;
-                    if (!slash || !slash.isOpen) return;
-
-                    const textarea = pDoc.querySelector('[data-testid="stChatInput"] textarea');
-                    if (!textarea) return;
-
-                    // 检查是否在当前输入框中
-                    if (e.target === textarea || pDoc.activeElement === textarea) {
-                        if (e.key === 'ArrowDown') {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-                            slash.activeIdx = (slash.activeIdx + 1) % slash.filteredCmds.length;
-                            slash.renderMenu();
-                        } else if (e.key === 'ArrowUp') {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-                            slash.activeIdx = (slash.activeIdx - 1 + slash.filteredCmds.length) % slash.filteredCmds.length;
-                            slash.renderMenu();
-                        } else if (e.key === 'Enter' || e.key === 'Tab') {
-                            // 坚决拦截 Enter 提交，直接将选中的指令补全到输入框！
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-                            if (slash.filteredCmds[slash.activeIdx]) {
-                                slash.selectCommand(slash.filteredCmds[slash.activeIdx].cmd);
-                            }
-                        } else if (e.key === 'Escape') {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-                            slash.hideMenu();
-                        }
-                    }
-                };
-
-                // 统一挂载全局 keydown 捕获监听器
-                if (win.__codemate_slash_kd) {
-                    win.removeEventListener('keydown', win.__codemate_slash_kd, true);
-                    pDoc.removeEventListener('keydown', win.__codemate_slash_kd, true);
-                }
-                win.__codemate_slash_kd = onKeyDownCapture;
-                win.addEventListener('keydown', onKeyDownCapture, true);
-                pDoc.addEventListener('keydown', onKeyDownCapture, true);
-
-                pDoc.addEventListener('click', (e) => {
-                    const slash = win.__CODEMATE_SLASH__;
-                    if (!slash || !slash.isOpen) return;
-                    const textarea = pDoc.querySelector('[data-testid="stChatInput"] textarea');
-                    if (slash.menuEl && !slash.menuEl.contains(e.target) && e.target !== textarea) {
-                        slash.hideMenu();
-                    }
-                });
-            }
-
-            // 定时轮询与绑定输入框，添加输入监听和自身 keydown 兜底
-            const checkAndBind = function() {
-                const slash = win.__CODEMATE_SLASH__;
-                if (!slash) return;
-                const textarea = pDoc.querySelector('[data-testid="stChatInput"] textarea');
-                if (!textarea || textarea.__slash_bound) return;
-                textarea.__slash_bound = true;
-
-                // 在 textarea 自身额外挂载一次捕获阶段拦截
-                if (win.__codemate_slash_kd) {
-                    textarea.addEventListener('keydown', win.__codemate_slash_kd, true);
-                }
-
-                textarea.addEventListener('input', () => {
-                    const raw = textarea.value;
-                    // 仅当以 / 开头，且未输入空格或换行时显示补全菜单
-                    if (raw.startsWith('/') && !raw.includes(' ') && !raw.includes('\\n')) {
-                        const query = raw.slice(1).trim().toLowerCase();
-                        slash.filteredCmds = slash.commands.filter(c => 
-                            c.cmd.toLowerCase().includes(query) || 
-                            c.title.toLowerCase().includes(query) ||
-                            c.desc.toLowerCase().includes(query)
-                        );
-                        if (slash.filteredCmds.length === 0) {
-                            slash.filteredCmds = slash.commands;
-                        }
-                        slash.activeIdx = 0;
-                        slash.showMenu(textarea);
-                    } else {
-                        slash.hideMenu();
-                    }
-                });
-            };
-
-            setInterval(checkAndBind, 300);
-        } catch(err) {
-            console.error("Slash menu setup error:", err);
-        }
-    })();
-    </script>
-    """, height=0)
 
 
 # -------------------------------------------------------------
