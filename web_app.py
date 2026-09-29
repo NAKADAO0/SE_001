@@ -17,7 +17,7 @@ import os
 import difflib
 import html
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -214,6 +214,86 @@ def extract_pasted_code(text: str) -> Optional[str]:
 
     return None
 
+
+HELP_COMMANDS_CARD = """
+### 💡 CodeMate 智能助手指令与交互指南
+
+您可以直接在底栏输入框通过**斜杠指令**或**自然语言**自由交互：
+
+| 快捷指令 | 对应专家 Agent | 核心功能与应用场景 |
+| :--- | :--- | :--- |
+| **`/审查`** 或 **`/review`** | `CodeReviewerAgent` | 全维度深度排查除零、未关句柄、越界与异常掩盖等漏洞并**直接自动修复源码** |
+| **`/重构`** 或 **`/refactor`** | `CodeRefactorAgent` | 识别代码坏味道、消除紧耦合与重复代码，应用设计模式提升可维护性 |
+| **`/测试`** 或 **`/test`** | `TestGeneratorAgent` | 自动编写 pytest 单元测试用例，并在安全沙箱中执行自测试自修复闭环 |
+| **`/解释`** 或 **`/explain`** | `CodeExplainerAgent` | 解构代码核心执行流程、评估渐进式时空复杂度（\\(O(n)\\)、\\(O(1)\\) 等）与变量状态变迁 |
+
+---
+🌟 **自然语言交互支持**（无需输入斜杠，直接提问）：
+- *“帮我查一下代码有没有除零崩溃风险”* ➔ 自动触发 **审查 Agent**
+- *“优化一下这个函数，把嵌套循环改掉”* ➔ 自动触发 **重构 Agent**
+- *“写几个单元测试跑一下”* ➔ 自动触发 **测试 Agent**
+- *“这段代码的时间和空间复杂度是多少”* ➔ 自动触发 **解释 Agent**
+- *“直接粘贴一段 Python 源码”* ➔ 自动识别并载入中间工作台！
+"""
+
+
+def parse_user_intent_and_prompt(text: str) -> Tuple[str, str, bool]:
+    """
+    智能解析用户输入的内容，判断是斜杠快捷指令、自然语言还是指令帮助请求。
+    返回: (task_type, formatted_prompt, is_help)
+    task_type: 'review' | 'refactor' | 'test' | 'explain' | 'help'
+    """
+    cleaned = text.strip()
+    lower = cleaned.lower()
+
+    # 1. 帮助指令触发
+    if lower in ("/", "/?", "/help", "/帮助", "帮助", "help", "指南"):
+        return "help", "", True
+
+    # 2. 中英文斜杠快捷指令
+    if lower.startswith(("/review", "/审查", "/代码审查", "/查错", "/审计")):
+        parts = cleaned.split(maxsplit=1)
+        user_req = parts[1] if len(parts) > 1 else ""
+        prompt = f"/review: {user_req}" if user_req else "/review: 请对当前代码进行全维度的深度全面代码审查，深入排查除零、未关文件、越界与异常掩盖等隐患，并给出修复建议与对比代码"
+        return "review", prompt, False
+
+    elif lower.startswith(("/refactor", "/重构", "/代码重构", "/优化", "/改写")):
+        parts = cleaned.split(maxsplit=1)
+        user_req = parts[1] if len(parts) > 1 else ""
+        prompt = f"/refactor: {user_req}" if user_req else "/refactor: 请重构当前代码，识别代码坏味道、消除冗余与紧耦合，应用合适的设计模式优化代码结构并提升可维护性"
+        return "refactor", prompt, False
+
+    elif lower.startswith(("/test", "/测试", "/生成测试", "/单测", "/pytest")):
+        parts = cleaned.split(maxsplit=1)
+        user_req = parts[1] if len(parts) > 1 else ""
+        prompt = f"/test: {user_req}" if user_req else "/test: 请为当前代码生成全分支覆盖的 pytest 单元测试用例，并在沙箱中执行验证"
+        return "test", prompt, False
+
+    elif lower.startswith(("/explain", "/解释", "/代码解释", "/讲解", "/复杂度")):
+        parts = cleaned.split(maxsplit=1)
+        user_req = parts[1] if len(parts) > 1 else ""
+        prompt = f"/explain: {user_req}" if user_req else "/explain: 请详细解释当前代码的核心执行流程，评估渐进式时空复杂度，并解析关键变量状态变迁"
+        return "explain", prompt, False
+
+    # 3. 自然语言意图智能识别 (无需加 /)
+    # 测试用例意图
+    if any(k in lower for k in ["测试", "单测", "pytest", "单元测试", "用例", "test case", "覆盖率"]):
+        return "test", f"/test: 针对当前代码，请执行测试任务：{cleaned}", False
+
+    # 重构优化意图
+    elif any(k in lower for k in ["重构", "优化结构", "坏味道", "解耦", "设计模式", "提高可读性", "消除冗余", "代码重写"]):
+        return "refactor", f"/refactor: 针对当前代码，请执行重构任务：{cleaned}", False
+
+    # 解释与复杂度意图
+    elif any(k in lower for k in ["解释", "讲解", "复杂度", "时空复杂度", "执行流程", "怎么运行", "什么意思", "代码逻辑", "原理"]):
+        return "explain", f"/explain: 针对当前代码，请进行代码解释与复杂度分析：{cleaned}", False
+
+    # 审查与找Bug意图 (默认优先)
+    elif any(k in lower for k in ["审查", "检查", "查错", "找bug", "漏洞", "除零", "越界", "泄漏", "隐患", "安全", "风险", "质量", "排查"]):
+        return "review", f"/review: 针对当前代码，请排查以下问题：{cleaned}", False
+
+    # 兜底自定义需求 -> 作为 review 智能体处理
+    return "review", f"针对当前中间源码，我的具体修改/审查需求是：{cleaned}", False
 
 
 def apply_single_issue_fix(code: str, issue: Any) -> str:
@@ -2258,7 +2338,15 @@ with dock_left:
             st.rerun()
 
     with dk_l2:
-        input_text = st.chat_input("提问或粘贴")
+        # 1. 输入栏正上方指令提示条：明确告知支持 / 或自然语言，以及具体可用指令
+        st.markdown("""
+<div style="font-size: 0.72rem; color: #94a3b8; display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; padding: 0 2px;">
+    <span>💡 支持: <code style="color: #fbbf24; background: rgba(245, 158, 11, 0.15); padding: 0 4px; border-radius: 3px;">/审查</code> <code style="color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 0 4px; border-radius: 3px;">/重构</code> <code style="color: #4ade80; background: rgba(74, 222, 128, 0.15); padding: 0 4px; border-radius: 3px;">/测试</code> <code style="color: #c084fc; background: rgba(192, 132, 252, 0.15); padding: 0 4px; border-radius: 3px;">/解释</code> 或任意自然语言提问</span>
+</div>
+""", unsafe_allow_html=True)
+
+        # 2. 置底输入框：提示清晰引导
+        input_text = st.chat_input("输入 /审查、/重构、/测试 或自然语言要求，亦可直接粘贴代码...")
         if input_text:
             cleaned = input_text.strip()
             pasted = extract_pasted_code(cleaned)
@@ -2276,30 +2364,32 @@ with dock_left:
                 st.toast("已将您粘贴的代码自动载入中间源代码区，并启动审查！", icon="📋")
                 st.rerun()
             else:
-                task_type = "review"
-                if cleaned.startswith("/review"):
-                    task_type = "review"
-                elif cleaned.startswith("/refactor"):
-                    task_type = "refactor"
-                elif cleaned.startswith("/test"):
-                    task_type = "test"
-                elif cleaned.startswith("/explain"):
-                    task_type = "explain"
-                elif cleaned == "/":
-                    task_type = "review"
-                    cleaned = "/review: 请审查当前代码"
+                task_type, prompt_str, is_help = parse_user_intent_and_prompt(cleaned)
 
+                # 若用户请求帮助 (输入了 /、/?、/help、/帮助 等)
+                if is_help:
+                    st.session_state.chat_messages.append({"role": "user", "content": cleaned})
+                    st.session_state.chat_messages.append({
+                        "role": "assistant",
+                        "content": HELP_COMMANDS_CARD,
+                    })
+                    st.toast("已在上方对话框展开快捷指令与自然语言使用指南！", icon="💡")
+                    st.rerun()
+
+                # 普通指令或自然语言请求：若无代码则优先装载简明样例
                 if not st.session_state.active_code:
-                    p = Path("samples/demo_shopping_cart.py")
+                    p = Path("samples/simple_demo.py")
+                    if not p.exists():
+                        p = Path("samples/demo_shopping_cart.py")
                     if p.exists():
                         txt = p.read_text(encoding="utf-8")
                         st.session_state.active_code = txt
                         st.session_state.baseline_code = txt
-                        st.session_state.active_file_name = "samples/demo_shopping_cart.py"
-                        st.toast("已自动为您装载电商购物车样例代码！", icon="🚀")
+                        st.session_state.active_file_name = p.name
+                        st.toast(f"已自动为您装载测试样例 [{p.name}]！", icon="🚀")
 
                 st.session_state.pending_task = {
-                    "prompt": cleaned if cleaned.startswith("/") else f"针对当前中间源码，我的具体修改需求是：{cleaned}",
+                    "prompt": prompt_str,
                     "task_type": task_type
                 }
                 st.rerun()
