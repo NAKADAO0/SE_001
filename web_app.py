@@ -613,21 +613,38 @@ st.markdown("""
         flex-direction: column !important;
     }
 
-    /* 顶层主垂直块与三列横向包裹块充满视口剩余空间，确保各列可直达屏幕底端 */
+    /* 顶层主垂直块充满视口，完美容纳：顶部导航栏 + 上层 Body 主体 + 最底端 Dock 操作坞 */
     .block-container > div[data-testid="stVerticalBlock"] {
         display: flex !important;
         flex-direction: column !important;
-        height: calc(100vh - 0.9rem) !important;
-        max-height: calc(100vh - 0.9rem) !important;
+        height: calc(100vh - 1rem) !important;
+        max-height: calc(100vh - 1rem) !important;
         flex: 1 !important;
+        justify-content: space-between !important;
     }
+    /* 上层 BODY 主视窗横向块：占满屏幕主体剩余高度 */
     .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type {
         display: flex !important;
         flex-direction: row !important;
-        height: calc(100vh - 70px) !important;
-        max-height: calc(100vh - 70px) !important;
+        height: calc(100vh - 146px) !important;
+        max-height: calc(100vh - 146px) !important;
         flex: 1 1 0% !important;
         align-items: stretch !important;
+        margin-bottom: 6px !important;
+    }
+    /* 最底端 DOCK 操作控制坞横向块：严格钉在屏幕最下方 */
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:last-of-type {
+        display: flex !important;
+        flex-direction: row !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        align-items: center !important;
+        margin-top: auto !important;
+        padding-top: 4px !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        background: rgba(11, 17, 32, 0.95) !important;
+        box-sizing: border-box !important;
     }
 
     /* 切断子容器的滚动链，防止局部滚动到底部后带动全局滑动 */
@@ -893,91 +910,89 @@ st.markdown("""
         margin-top: 6px;
     }
 
-    /* 三列布局全高贯通，直接绑定视口高度，消除祖先节点高度截断 */
-    [data-testid="column"] {
+    /* 三列布局全高贯通：第一组为 Body 视窗，第二组为最底端 Dock 操作坞 */
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type > [data-testid="stColumn"],
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type > [data-testid="column"] {
         display: flex !important;
         flex-direction: column !important;
-        height: calc(100vh - 66px) !important;
-        min-height: calc(100vh - 66px) !important;
-        max-height: calc(100vh - 66px) !important;
+        height: 100% !important;
+        max-height: 100% !important;
         box-sizing: border-box !important;
         position: relative !important;
     }
-    [data-testid="column"] > div {
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type > [data-testid="stColumn"] > div,
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type > [data-testid="column"] > div {
         height: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
     }
 
-    /* 【左侧栏】：对话容器按视口高度自适应拉伸，审查按钮与输入框死死钉在页面底端固定 */
-    [data-testid="column"]:first-child div[data-testid="stVerticalBlockBorderWrapper"] {
-        height: calc(100vh - 176px) !important;
-        max-height: calc(100vh - 176px) !important;
+    /* 【左侧 Body】：对话与思考流容器充满上层视窗，独立平滑滚动 */
+    .st-key-chat_box_container,
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type [data-testid="stColumn"]:first-child div[data-testid="stVerticalBlockBorderWrapper"],
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type [data-testid="column"]:first-child div[data-testid="stVerticalBlockBorderWrapper"] {
+        flex: 1 1 0% !important;
+        height: calc(100vh - 195px) !important;
+        max-height: calc(100vh - 195px) !important;
         min-height: 200px !important;
         box-sizing: border-box !important;
     }
-    [data-testid="column"]:first-child div[data-testid="stVerticalBlockBorderWrapper"] > div {
-        height: 100% !important;
-        max-height: 100% !important;
-        overflow-y: auto !important;
+
+    /* 【中间 Body】：空状态卡片或代码视窗充满上层视窗，独立平滑滚动 */
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type [data-testid="stColumn"]:nth-child(2) .empty-state-box,
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type [data-testid="column"]:nth-child(2) .empty-state-box {
+        flex: 1 1 0% !important;
+        height: calc(100vh - 195px) !important;
+        max-height: calc(100vh - 195px) !important;
+        min-height: 200px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
     }
-    [data-testid="column"]:first-child div[data-testid="stButton"]:has(button[kind="primary"]),
-    [data-testid="column"]:first-child div[data-testid="stVerticalBlockBorderWrapper"] ~ div[data-testid="stButton"] {
-        margin-top: auto !important;
-        margin-bottom: 4px !important;
+    .st-key-code_box_container,
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type [data-testid="stColumn"]:nth-child(2) div[data-testid="stVerticalBlockBorderWrapper"],
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type [data-testid="column"]:nth-child(2) div[data-testid="stVerticalBlockBorderWrapper"] {
+        flex: 1 1 0% !important;
+        height: calc(100vh - 245px) !important;
+        max-height: calc(100vh - 245px) !important;
+        min-height: 200px !important;
+        box-sizing: border-box !important;
     }
-    [data-testid="column"]:first-child [data-testid="stChatInput"] {
-        margin-top: 0 !important;
-        margin-bottom: 2px !important;
+
+    /* 【右侧 Body】：空状态卡片或风险列表充满上层视窗，独立平滑滚动 */
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type [data-testid="stColumn"]:nth-child(3) .empty-state-box,
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type [data-testid="column"]:nth-child(3) .empty-state-box {
+        flex: 1 1 0% !important;
+        height: calc(100vh - 195px) !important;
+        max-height: calc(100vh - 195px) !important;
+        min-height: 200px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .st-key-risk_box_container,
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type [data-testid="stColumn"]:nth-child(3) div[data-testid="stVerticalBlockBorderWrapper"],
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type [data-testid="column"]:nth-child(3) div[data-testid="stVerticalBlockBorderWrapper"] {
+        flex: 1 1 0% !important;
+        height: calc(100vh - 305px) !important;
+        max-height: calc(100vh - 305px) !important;
+        min-height: 200px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 【最底端 DOCK】：严格沉底排布，所有操作按钮统一 38px 高度，平齐紧凑 */
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:last-of-type [data-testid="stButton"] button,
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:last-of-type [data-testid="stDownloadButton"] button,
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:last-of-type [data-testid="stPopover"] > button {
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:last-of-type [data-testid="stChatInput"] {
+        margin: 0 !important;
         position: static !important;
         width: 100% !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
-    }
-
-    /* 【中间栏】：空状态卡片按视口高度自适应拉伸，底部按钮行死死钉在页面底端固定 */
-    [data-testid="column"]:nth-child(2) .empty-state-box {
-        height: calc(100vh - 162px) !important;
-        max-height: calc(100vh - 162px) !important;
-        min-height: 220px !important;
-        margin: 6px 0 10px 0 !important;
-    }
-    .empty-state-box ~ div[data-testid="stHorizontalBlock"],
-    [data-testid="column"]:nth-child(2) div[data-testid="stHorizontalBlock"]:last-child {
-        margin-top: auto !important;
-        margin-bottom: 2px !important;
-    }
-    /* 中间栏有代码时：代码视窗容器按视口高度自适应拉伸 */
-    [data-testid="column"]:nth-child(2) div[data-testid="stVerticalBlockBorderWrapper"] {
-        height: calc(100vh - 215px) !important;
-        max-height: calc(100vh - 215px) !important;
-        min-height: 220px !important;
-        box-sizing: border-box !important;
-    }
-    [data-testid="column"]:nth-child(2) div[data-testid="stVerticalBlockBorderWrapper"] > div {
-        height: 100% !important;
-        max-height: 100% !important;
-        overflow-y: auto !important;
-    }
-
-    /* 【右侧栏】：空状态与风险列表按视口高度拉伸到底端 */
-    [data-testid="column"]:nth-child(3) .empty-state-box {
-        height: calc(100vh - 110px) !important;
-        max-height: calc(100vh - 110px) !important;
-        min-height: 220px !important;
-        margin: 6px 0 10px 0 !important;
-    }
-    [data-testid="column"]:nth-child(3) div[data-testid="stVerticalBlockBorderWrapper"] {
-        height: calc(100vh - 215px) !important;
-        max-height: calc(100vh - 215px) !important;
-        min-height: 220px !important;
-        box-sizing: border-box !important;
-    }
-    [data-testid="column"]:nth-child(3) div[data-testid="stVerticalBlockBorderWrapper"] > div {
-        height: 100% !important;
-        max-height: 100% !important;
-        overflow-y: auto !important;
     }
 
     /* Claude AI 风格快捷指令药丸按钮 (Quick Action Chips) */
@@ -1055,22 +1070,6 @@ st.markdown("""
         display: flex;
         align-items: center;
         gap: 6px;
-    }
-    .empty-state-box {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
-        background: rgba(15, 23, 42, 0.45) !important;
-        border: 1.5px dashed rgba(148, 163, 184, 0.25) !important;
-        border-radius: 12px !important;
-        padding: 30px 24px !important;
-        margin: 6px 0 10px 0 !important;
-        flex: 1 1 0% !important;
-        height: 100% !important;
-        min-height: 220px !important;
-        box-sizing: border-box !important;
     }
     .empty-state-icon {
         font-size: 2.8rem;
@@ -1546,42 +1545,42 @@ with st.sidebar:
         st.rerun()
 
 
-# ================= 核心 AI IDE 三列布局：左助手 (28%) + 中源代码 (44%) + 右风险点 (28%) =================
-col_left, col_center, col_right = st.columns([2.8, 4.4, 2.8], gap="small")
+# ================= 核心 AI IDE 两段式架构：上层 Body 视窗 + 最底端 Dock 操作坞 =================
+# 1. 上层 BODY 工作视窗：左助手 (28%) + 中源代码 (44%) + 右风险点 (28%)
+body_left, body_center, body_right = st.columns([2.8, 4.4, 2.8], gap="small")
+
+# 辅助函数：格式化思考步骤 (严格契合 Agent 循环：输入 → 推理 → 工具调用 → 输出)
+def format_step_badge(step: Dict[str, Any]) -> str:
+    s_type = step.get("type")
+    if s_type == "pipeline_start":
+        return f"📥 **[Agent 循环 1/4 · 输入 Input]**: 接收目标源码 ({step.get('lines', 0)} 行)"
+    elif s_type == "phase1_complete":
+        issues_cnt = step.get("initial_issues_count", 0)
+        return f"🔍 **[代码解析 · 静态 AST 扫描]**: 初筛锁定 **{issues_cnt}** 处潜在风险线索 (函数 {len(step.get('functions', []))} 个)"
+    elif s_type == "phase2_dispatch":
+        return f"🤖 **[专家智能体调度]**: 任务委派给 `{step.get('agent', 'CodeReviewerAgent')}`"
+    elif s_type == "agent_start":
+        return f"🧠 **[Agent 循环 2/4 · 推理 Reasoning]**: {step.get('agent_name', 'CodeReviewerAgent')} 深入分析代码质量与潜在Bug"
+    elif s_type == "call":
+        return f"⚡ **[Agent 循环 3/4 · 工具调用 Tool Call]**: 第 {step.get('iteration', 1)} 轮自主调度 LangChain 工具 `{step.get('tool')}`"
+    elif s_type == "result":
+        status_text = "✅ 沙箱执行成功" if step.get("success") else "❌ 执行报错/异常"
+        return f"📋 **[Agent 循环 3/4 · 环境观察 Observation]**: {status_text} (工具 `{step.get('tool')}`)"
+    elif s_type == "agent_finish":
+        return f"💡 **[Agent 循环 4/4 · 推理收敛]**: 历经 {step.get('iterations', 1)} 轮 ReAct 思考，整改建议生成完毕"
+    elif s_type == "pipeline_finish":
+        return f"✔ **[成果输出 Output]**: 代码质量评估与缺陷看板聚合就绪"
+    return f"● {step.get('title', '处理中')}"
 
 
 # -------------------------------------------------------------
-# 【左侧栏】：🤖 AI Copilot 助手 (占比 28%)
-# 沉浸式对话、思考流、Claude Pill 快捷指令、智能提取粘贴代码的置底输入框
+# 【左侧 Body】：🤖 AI Copilot 助手视窗 (占比 28%)
+# 仅承载对话历史、思考流、工具调用轨迹，独立平滑滚动
 # -------------------------------------------------------------
-with col_left:
+with body_left:
     st.markdown('<div class="col-header"><span class="col-header-title">🤖 AI Copilot 助手</span><span style="font-size: 0.72rem; color: #94a3b8; font-family: monospace;">LangChain ReAct</span></div>', unsafe_allow_html=True)
 
-    # 辅助函数：格式化思考步骤 (严格契合 Agent 循环：输入 → 推理 → 工具调用 → 输出)
-    def format_step_badge(step: Dict[str, Any]) -> str:
-        s_type = step.get("type")
-        if s_type == "pipeline_start":
-            return f"📥 **[Agent 循环 1/4 · 输入 Input]**: 接收目标源码 ({step.get('lines', 0)} 行)"
-        elif s_type == "phase1_complete":
-            issues_cnt = step.get("initial_issues_count", 0)
-            return f"🔍 **[代码解析 · 静态 AST 扫描]**: 初筛锁定 **{issues_cnt}** 处潜在风险线索 (函数 {len(step.get('functions', []))} 个)"
-        elif s_type == "phase2_dispatch":
-            return f"🤖 **[专家智能体调度]**: 任务委派给 `{step.get('agent', 'CodeReviewerAgent')}`"
-        elif s_type == "agent_start":
-            return f"🧠 **[Agent 循环 2/4 · 推理 Reasoning]**: {step.get('agent_name', 'CodeReviewerAgent')} 深入分析代码质量与潜在Bug"
-        elif s_type == "call":
-            return f"⚡ **[Agent 循环 3/4 · 工具调用 Tool Call]**: 第 {step.get('iteration', 1)} 轮自主调度 LangChain 工具 `{step.get('tool')}`"
-        elif s_type == "result":
-            status_text = "✅ 沙箱执行成功" if step.get("success") else "❌ 执行报错/异常"
-            return f"📋 **[Agent 循环 3/4 · 环境观察 Observation]**: {status_text} (工具 `{step.get('tool')}`)"
-        elif s_type == "agent_finish":
-            return f"💡 **[Agent 循环 4/4 · 推理收敛]**: 历经 {step.get('iterations', 1)} 轮 ReAct 思考，整改建议生成完毕"
-        elif s_type == "pipeline_finish":
-            return f"✔ **[成果输出 Output]**: 代码质量评估与缺陷看板聚合就绪"
-        return f"● {step.get('title', '处理中')}"
-
-    # 对话流容器 (高度 490px，配合固定页面视口独立平滑滚动)
-    chat_box = st.container(height=490)
+    chat_box = st.container(height=520)
     with chat_box:
         # 1. 历史消息渲染
         for msg in st.session_state.chat_messages:
@@ -1707,7 +1706,6 @@ with col_left:
                     st.session_state.active_code = extracted_code
                     st.session_state.refactored_code = extracted_code
                 else:
-                    # 依次回放所有检出缺陷的安全防御替换
                     fixed_code = st.session_state.active_code
                     for iss in raw_issues:
                         fixed_code = apply_single_issue_fix(fixed_code, iss)
@@ -1715,7 +1713,6 @@ with col_left:
                         st.session_state.active_code = fixed_code
                         st.session_state.refactored_code = fixed_code
                     elif "ShoppingCart" in st.session_state.baseline_code:
-                        # 样例电商购物车保底重构版本
                         st.session_state.active_code = DEFAULT_REFACTORED_SHOPPING_CART.strip()
                         st.session_state.refactored_code = DEFAULT_REFACTORED_SHOPPING_CART.strip()
 
@@ -1732,76 +1729,12 @@ with col_left:
 
             st.rerun()
 
-    # 专精单一核心功能：⚡ 全面代码审查
-    if st.button("⚡ 启动全面代码审查", type="primary", use_container_width=True, help="启动 CodeReviewerAgent 深入排查代码质量、隐蔽Bug与安全漏洞"):
-        if not st.session_state.active_code:
-            p = Path("samples/demo_shopping_cart.py")
-            if p.exists():
-                txt = p.read_text(encoding="utf-8")
-                st.session_state.active_code = txt
-                st.session_state.baseline_code = txt
-                st.session_state.active_file_name = "samples/demo_shopping_cart.py"
-                st.toast("已自动装载电商购物车样例并启动全面审查！", icon="🚀")
-        st.session_state.pending_task = {
-            "prompt": "/review: 请对当前代码进行全维度的深度全面代码审查，深入排查除零、未关文件、越界与异常掩盖等隐患，并给出修复建议与对比代码",
-            "task_type": "review"
-        }
-        st.rerun()
-
-    # 置底输入框：支持自然语言自由交互与复制代码直接粘贴
-    input_text = st.chat_input("输入对当前代码的审查要求，或直接粘贴 Python 代码...")
-    if input_text:
-        cleaned = input_text.strip()
-        pasted = extract_pasted_code(cleaned)
-        if pasted:
-            # 智能提取到代码，自动装入中间源代码区，并自动触发审查
-            st.session_state.active_code = pasted
-            st.session_state.baseline_code = pasted
-            st.session_state.active_file_name = "clipboard_code.py"
-            st.session_state.reviewed = False
-            st.session_state.analysis_result = None
-            st.session_state.refactored_code = None
-            st.session_state.pending_task = {
-                "prompt": "/review: 请对我复制粘贴的 Python 源代码进行全面安全与漏洞审查，排查潜在运行时Bug与安全漏洞",
-                "task_type": "review"
-            }
-            st.toast("已将您粘贴的代码自动载入中间源代码区，并启动审查！", icon="📋")
-            st.rerun()
-        else:
-            task_type = "review"
-            if cleaned.startswith("/review"):
-                task_type = "review"
-            elif cleaned.startswith("/refactor"):
-                task_type = "refactor"
-            elif cleaned.startswith("/test"):
-                task_type = "test"
-            elif cleaned.startswith("/explain"):
-                task_type = "explain"
-            elif cleaned == "/":
-                task_type = "review"
-                cleaned = "/review: 请审查当前代码"
-
-            if not st.session_state.active_code:
-                p = Path("samples/demo_shopping_cart.py")
-                if p.exists():
-                    txt = p.read_text(encoding="utf-8")
-                    st.session_state.active_code = txt
-                    st.session_state.baseline_code = txt
-                    st.session_state.active_file_name = "samples/demo_shopping_cart.py"
-                    st.toast("已自动为您装载电商购物车样例代码！", icon="🚀")
-
-            st.session_state.pending_task = {
-                "prompt": cleaned if cleaned.startswith("/") else f"针对当前中间源码，我的具体修改需求是：{cleaned}",
-                "task_type": task_type
-            }
-            st.rerun()
-
 
 # -------------------------------------------------------------
-# 【中间栏】：💻 源代码检视与编辑 (占比 44%)
-# 最初为空状态卡片；载入代码后显示源码透视、红橙风险高亮与在线编辑器
+# 【中间 Body】：💻 源代码检视与编辑视窗 (占比 44%)
+# 上半部纯净代码主体视窗，支持检视、在线编辑、差异对比和沙箱终端
 # -------------------------------------------------------------
-with col_center:
+with body_center:
     code_lines = len(st.session_state.active_code.splitlines()) if st.session_state.active_code else 0
     cur_fname = Path(st.session_state.get('active_file_name', 'untitled.py')).name
 
@@ -1815,108 +1748,16 @@ with col_center:
 """, unsafe_allow_html=True)
 
     if not st.session_state.active_code:
-        # 最初没有任何代码时的空状态卡片
         st.markdown("""
-<div class="empty-state-box">
+<div class="empty-state-box" style="height: 520px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0; box-sizing: border-box;">
     <div class="empty-state-icon">📁</div>
     <div class="empty-state-title">暂无代码内容</div>
     <div class="empty-state-desc">
-        请在下方上传本地 <code>.py</code> 源代码文件，或者直接在左侧 AI 助手对话框中<strong>粘贴代码</strong>，中间区域将立即呈现源码。
+        请在最下方底栏上传本地 <code>.py</code> 源代码文件，或载入测试样例；也可以在左下角对话框中<strong>粘贴代码</strong>，中间区域将立即呈现源码。
     </div>
 </div>
 """, unsafe_allow_html=True)
-
-        emp_c1, emp_c2 = st.columns([1, 1], gap="small")
-        with emp_c1:
-            with st.popover("📂 上传本地 Python 源码", use_container_width=True):
-                st.markdown("##### 📂 上传本地 .py 源码文件")
-                up_initial = st.file_uploader("选择 Python 文件", type=["py"], key="initial_source_upload")
-                if up_initial is not None:
-                    content = up_initial.read().decode("utf-8", errors="replace")
-                    st.session_state.active_code = content
-                    st.session_state.baseline_code = content
-                    st.session_state.active_file_name = up_initial.name
-                    st.session_state.reviewed = False
-                    st.session_state.analysis_result = None
-                    st.session_state.refactored_code = None
-                    st.toast(f"已装载代码: {up_initial.name}", icon="📤")
-                    st.rerun()
-        with emp_c2:
-            if st.button("🚀 载入电商购物车样例", use_container_width=True, help="一键载入含除零、句柄未关缺陷的电商购物车代码"):
-                p = Path("samples/demo_shopping_cart.py")
-                if p.exists():
-                    txt = p.read_text(encoding="utf-8")
-                    st.session_state.active_code = txt
-                    st.session_state.baseline_code = txt
-                    st.session_state.active_file_name = "samples/demo_shopping_cart.py"
-                    st.session_state.reviewed = False
-                    st.session_state.analysis_result = None
-                    st.session_state.refactored_code = None
-                    st.toast("已载入电商购物车样例代码！", icon="🚀")
-                    st.rerun()
-
     else:
-        # 1. 核心操作控制栏 (📤 上传代码 + 📚 样例代码 + 💾 导出修改后源码 + 🗑️ 清空)
-        op_c1, op_c2, op_c3, op_c4 = st.columns([2.4, 2.4, 3.2, 0.8], gap="small")
-        with op_c1:
-            with st.popover("📤 上传代码", use_container_width=True):
-                st.markdown("##### 📤 上传本地 Python 源码")
-                up_replace = st.file_uploader("选择 .py 文件", type=["py"], key="replace_source_upload")
-                if up_replace is not None:
-                    c = up_replace.read().decode("utf-8", errors="replace")
-                    if c != st.session_state.active_code:
-                        st.session_state.active_code = c
-                        st.session_state.baseline_code = c
-                        st.session_state.active_file_name = up_replace.name
-                        st.session_state.reviewed = False
-                        st.session_state.analysis_result = None
-                        st.session_state.refactored_code = None
-                        st.toast(f"已更新源码: {up_replace.name}", icon="📤")
-                        st.rerun()
-        with op_c2:
-            with st.popover("📚 样例代码", use_container_width=True):
-                st.markdown("##### 📚 快速载入测试样例")
-                sample_files = {
-                    "电商购物车 (含除零/泄漏)": "samples/demo_shopping_cart.py",
-                    "典型风险缺陷样例": "samples/buggy_code.py",
-                    "算法函数集": "samples/math_utils.py",
-                }
-                sel_sample = st.selectbox("选择测试样例文件", list(sample_files.keys()))
-                if st.button("载入选中样例", use_container_width=True):
-                    sp = Path(sample_files[sel_sample])
-                    if sp.exists():
-                        st.session_state.active_code = sp.read_text(encoding="utf-8")
-                        st.session_state.baseline_code = st.session_state.active_code
-                        st.session_state.active_file_name = sample_files[sel_sample]
-                        st.session_state.reviewed = False
-                        st.session_state.analysis_result = None
-                        st.session_state.refactored_code = None
-                        st.rerun()
-        with op_c3:
-            # 导出当前修改后的 Python 源码
-            out_filename = Path(st.session_state.get("active_file_name", "code.py")).name
-            if not out_filename.endswith(".py"):
-                out_filename += ".py"
-            export_filename = f"reviewed_{out_filename}" if st.session_state.get("reviewed") else out_filename
-            st.download_button(
-                label="💾 导出修改后源码",
-                data=st.session_state.active_code,
-                file_name=export_filename,
-                mime="text/x-python",
-                use_container_width=True,
-                help="将当前已审查并修改的 Python 源码导出下载至本地"
-            )
-        with op_c4:
-            if st.button("🗑️", help="清空当前代码，恢复初始空状态", use_container_width=True):
-                st.session_state.active_code = ""
-                st.session_state.baseline_code = ""
-                st.session_state.active_file_name = "未加载代码"
-                st.session_state.reviewed = False
-                st.session_state.analysis_result = None
-                st.session_state.refactored_code = None
-                st.rerun()
-
-        # 2. 紧贴代码顶部的视图模式切换与状态条
         has_diff = bool(
             st.session_state.baseline_code
             and st.session_state.active_code.strip() != st.session_state.baseline_code.strip()
@@ -1938,20 +1779,18 @@ with col_center:
         with sub_c2:
             st.markdown(f'<div style="text-align: right; font-size: 0.76rem; color: #94a3b8; line-height: 28px; font-family: monospace;">📄 {cur_fname} · {code_lines} 行</div>', unsafe_allow_html=True)
 
-        # 若已完成审查，顶部显示显眼的自动修复成功状态通知横幅 (紧凑型)
         if st.session_state.reviewed:
             st.markdown("""
-<div style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1.5px solid #10b981; border-radius: 8px; padding: 6px 12px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+<div style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1.5px solid #10b981; border-radius: 8px; padding: 5px 12px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
     <div>
-        <span style="color: #4ade80; font-weight: 700; font-size: 0.88rem;">🎉 AI 审查完毕：已直接在下方源码中修复全部风险隐患！</span>
-        <span style="color: #94a3b8; font-size: 0.75rem; margin-left: 8px;">除零、未关句柄、越界与裸 except 均已自动应用防御性重构代码。</span>
+        <span style="color: #4ade80; font-weight: 700; font-size: 0.86rem;">🎉 AI 审查完毕：已直接在下方源码中修复全部风险隐患！</span>
+        <span style="color: #94a3b8; font-size: 0.74rem; margin-left: 8px;">除零、未关句柄、越界与裸 except 均已自动应用防御性重构代码。</span>
     </div>
     <span style="background: #059669; color: #fff; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; font-weight: 600;">✔ 已直接修复</span>
 </div>
 """, unsafe_allow_html=True)
 
-        # 核心代码视窗容器 (严格固定高度，超出仅容器内部垂直滑动，页面整体与其它区域完全纹丝不动)
-        code_box_height = 450 if st.session_state.reviewed else 490
+        code_box_height = 430 if st.session_state.reviewed else 470
         code_box = st.container(height=code_box_height)
         with code_box:
             if "源代码检视" in code_view_mode:
@@ -1996,34 +1835,27 @@ with col_center:
                 else:
                     st.markdown('<div class="terminal-window">>_ 终端就绪 (等待代码审查与沙箱运行验证任务...)</div>', unsafe_allow_html=True)
 
-        if st.session_state.reviewed:
-            st.caption("💡 提示：当前代码为 AI 审查并自动修复后的安全健壮版本，代码下滑仅在当前代码视窗内滚动，页面整体固定。")
-        else:
-            st.caption("💡 提示：在左侧点击【⚡ 启动全面代码审查】后，AI 将直接在当前源码中修复全部已知风险！")
-
 
 # -------------------------------------------------------------
-# 【右侧栏】：⚠️ 风险点与缺陷诊断 (占比 28%)
-# 最初为空状态卡片；审查完毕后呈现健康评分、致命/高危风险点、成因建议与一键修复
+# 【右侧 Body】：⚠️ 风险点与缺陷诊断视窗 (占比 28%)
+# 最初为空状态卡片；审查完毕后呈现健康评分、致命/高危风险点与修复方案
 # -------------------------------------------------------------
-with col_right:
+with body_right:
     st.markdown('<div class="col-header"><span class="col-header-title">⚠️ 风险点与缺陷诊断</span></div>', unsafe_allow_html=True)
 
     if not st.session_state.active_code or not st.session_state.reviewed:
-        # 最初没有审查时的优雅空状态卡片
         st.markdown("""
-<div class="empty-state-box">
+<div class="empty-state-box" style="height: 520px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0; box-sizing: border-box;">
     <div class="empty-state-icon">🛡️</div>
     <div class="empty-state-title">暂无风险内容</div>
     <div class="empty-state-desc">
         当前尚未执行代码审查。<br/>
-        请在中间区域载入源代码，并在左侧点击<strong>【⚡ 启动全面代码审查】</strong>。<br/><br/>
-        审查完成后，修复代码将直接应用在中间源码中，右侧将呈现深度安全健康评分、致命崩溃与高危风险点，并可在中间随时导出修改后的 Python 源码。
+        请在最下方底栏载入源代码，并在左下角点击<strong>【⚡ 启动全面代码审查】</strong>。<br/><br/>
+        审查完成后，修复代码将直接应用在中间源码中，此处将呈现深度安全健康评分、致命崩溃与高危风险点。
     </div>
 </div>
 """, unsafe_allow_html=True)
     else:
-        # 审查完毕后，呈现排查出的原始历史风险点！
         issues = st.session_state.get("detected_issues", [])
         if not issues:
             rule_res = st.session_state.pipeline.rule_engine.analyze_source(st.session_state.baseline_code or st.session_state.active_code)
@@ -2044,79 +1876,39 @@ with col_right:
         else:
             grade_text, grade_color = "D (高危风险)", "#f87171"
 
-        # 顶部 2x2 统计卡片 (完美适配 28% 宽度)
         st.markdown(f"""
-<div class="audit-metrics-row" style="grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 8px;">
-    <div class="audit-stat-card" style="padding: 8px 10px;">
-        <div class="audit-stat-title" style="font-size: 0.72rem;">🛡️ 健康评分</div>
-        <div class="audit-stat-value" style="color: {grade_color}; font-size: 1.2rem;">{health_score} <span style="font-size: 0.75rem;">/ 100</span></div>
-        <div class="audit-stat-sub" style="font-size: 0.68rem;">评级: <strong>{grade_text}</strong></div>
+<div class="audit-metrics-row" style="grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 6px;">
+    <div class="audit-stat-card" style="padding: 6px 10px;">
+        <div class="audit-stat-title" style="font-size: 0.7rem;">🛡️ 健康评分</div>
+        <div class="audit-stat-value" style="color: {grade_color}; font-size: 1.15rem;">{health_score} <span style="font-size: 0.75rem;">/ 100</span></div>
+        <div class="audit-stat-sub" style="font-size: 0.65rem;">评级: <strong>{grade_text}</strong></div>
     </div>
-    <div class="audit-stat-card" style="padding: 8px 10px;">
-        <div class="audit-stat-title" style="font-size: 0.72rem;">🔴 致命崩溃 (P0)</div>
-        <div class="audit-stat-value" style="color: #f87171; font-size: 1.2rem;">{crit_cnt} <span style="font-size: 0.75rem; color: #94a3b8;">处</span></div>
-        <div class="audit-stat-sub" style="font-size: 0.68rem;">除零、越界</div>
+    <div class="audit-stat-card" style="padding: 6px 10px;">
+        <div class="audit-stat-title" style="font-size: 0.7rem;">🔴 致命崩溃 (P0)</div>
+        <div class="audit-stat-value" style="color: #f87171; font-size: 1.15rem;">{crit_cnt} <span style="font-size: 0.75rem; color: #94a3b8;">处</span></div>
+        <div class="audit-stat-sub" style="font-size: 0.65rem;">除零、越界</div>
     </div>
-    <div class="audit-stat-card" style="padding: 8px 10px;">
-        <div class="audit-stat-title" style="font-size: 0.72rem;">🟠 高危泄漏 (P1)</div>
-        <div class="audit-stat-value" style="color: #fb923c; font-size: 1.2rem;">{high_cnt} <span style="font-size: 0.75rem; color: #94a3b8;">处</span></div>
-        <div class="audit-stat-sub" style="font-size: 0.68rem;">句柄未关、吞异常</div>
+    <div class="audit-stat-card" style="padding: 6px 10px;">
+        <div class="audit-stat-title" style="font-size: 0.7rem;">🟠 高危泄漏 (P1)</div>
+        <div class="audit-stat-value" style="color: #fb923c; font-size: 1.15rem;">{high_cnt} <span style="font-size: 0.75rem; color: #94a3b8;">处</span></div>
+        <div class="audit-stat-sub" style="font-size: 0.65rem;">句柄未关、吞异常</div>
     </div>
-    <div class="audit-stat-card" style="padding: 8px 10px;">
-        <div class="audit-stat-title" style="font-size: 0.72rem;">🔵 中危风险 (P2)</div>
-        <div class="audit-stat-value" style="color: #60a5fa; font-size: 1.2rem;">{med_cnt} <span style="font-size: 0.75rem; color: #94a3b8;">处</span></div>
-        <div class="audit-stat-sub" style="font-size: 0.68rem;">参数过多、嵌套</div>
+    <div class="audit-stat-card" style="padding: 6px 10px;">
+        <div class="audit-stat-title" style="font-size: 0.7rem;">🔵 中危风险 (P2)</div>
+        <div class="audit-stat-value" style="color: #60a5fa; font-size: 1.15rem;">{med_cnt} <span style="font-size: 0.75rem; color: #94a3b8;">处</span></div>
+        <div class="audit-stat-sub" style="font-size: 0.65rem;">参数过多、嵌套</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-        # 筛选与导出报告
-        rf_c1, rf_c2 = st.columns([1.6, 1.2], gap="small")
-        with rf_c1:
-            severity_filter = st.selectbox(
-                "严重级别筛选",
-                ["全部严重度", "🔴 仅致命 (P0)", "🟠 仅高危 (P1)", "🔵 仅中危 (P2)"],
-                index=0,
-                label_visibility="collapsed",
-                key="right_sev_filter"
-            )
-        with rf_c2:
-            with st.popover("📥 导出报告", use_container_width=True):
-                rep_lines = [
-                    f"# Python 源代码安全与缺陷审计报告",
-                    f"- **审计目标**: `{Path(st.session_state.get('active_file_name', 'source.py')).name}`",
-                    f"- **安全评分**: **{health_score} / 100** ({grade_text})",
-                    f"- **缺陷总计**: {len(issues)} 处 (致命 {crit_cnt} | 高危 {high_cnt} | 中危 {med_cnt})",
-                    f"\n## 一、缺陷清单与深度整改方案",
-                ]
-                for idx, iss in enumerate(issues, 1):
-                    sev_str = getattr(iss.severity, 'value', str(iss.severity))
-                    line_no = getattr(iss, 'line', 1)
-                    cat_name = getattr(iss, 'category', '未知分类')
-                    desc = getattr(iss, 'description', '')
-                    sugg = getattr(iss, 'suggestion', '')
-                    snip = getattr(iss, 'snippet', '')
-                    rep_lines.append(f"### [R-{idx:02d}] [{sev_str}] 第 {line_no} 行: {cat_name}")
-                    if snip:
-                        rep_lines.append(f"```python\n# 缺陷代码行\n{snip}\n```")
-                    rep_lines.append(f"- **机理剖析**: {desc}")
-                    rep_lines.append(f"- **修复建议**: {sugg}\n")
+        severity_filter = st.selectbox(
+            "严重级别筛选",
+            ["全部严重度", "🔴 仅致命 (P0)", "🟠 仅高危 (P1)", "🔵 仅中危 (P2)"],
+            index=0,
+            label_visibility="collapsed",
+            key="right_sev_filter"
+        )
 
-                if st.session_state.get("analysis_result"):
-                    p2_rep = st.session_state.analysis_result.get("phase2", {}).get("report", "")
-                    if p2_rep:
-                        rep_lines.append(f"\n## 二、专家智能体综合审计报告\n{p2_rep}")
-
-                full_report_md = "\n".join(rep_lines)
-                st.download_button(
-                    label="💾 下载 Markdown 报告",
-                    data=full_report_md,
-                    file_name=f"audit_report_{Path(st.session_state.get('active_file_name', 'code')).stem}.md",
-                    mime="text/markdown",
-                    use_container_width=True
-                )
-
-        # 过滤缺陷
         filtered_issues = []
         for iss in issues:
             sev_val = getattr(iss.severity, 'value', str(iss.severity))
@@ -2128,17 +1920,14 @@ with col_right:
                 continue
             filtered_issues.append(iss)
 
-        # 风险卡片纵向滚动列表 (高度 480px，配合固定页面视口独立平滑滚动)
-        risk_box = st.container(height=480)
+        risk_box = st.container(height=390)
         with risk_box:
-            # 顶部提示状态条
             st.markdown("""
-<div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 6px; padding: 6px 12px; margin-bottom: 8px; font-size: 0.8rem; color: #86efac; display: flex; align-items: center; justify-content: space-between;">
+<div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 6px; padding: 5px 10px; margin-bottom: 8px; font-size: 0.78rem; color: #86efac; display: flex; align-items: center; justify-content: space-between;">
     <span>✔ 全部排查出的风险隐患已直接在中间源码中修复完成</span>
-    <span style="font-size: 0.72rem; color: #a7f3d0;">已生效</span>
+    <span style="font-size: 0.7rem; color: #a7f3d0;">已生效</span>
 </div>
 """, unsafe_allow_html=True)
-
             if filtered_issues:
                 for idx, iss in enumerate(filtered_issues, 1):
                     issue_key = f"R-{idx:02d}"
@@ -2172,10 +1961,226 @@ with col_right:
             else:
                 st.success("✅ 当前筛选条件下无风险，代码完全符合规范！")
 
-            # 专家 Agent 深度综合审计报告折叠盒
             if st.session_state.get("analysis_result"):
                 p2 = st.session_state.analysis_result.get("phase2", {})
                 if p2.get("report"):
                     with st.expander("📄 查看专家 Agent 深度综合审计长篇报告", expanded=False):
                         st.markdown(p2["report"])
+
+
+# ================= 核心 AI IDE 最底端操作控制坞 (Bottom Dock) =================
+# 严格死死固定在屏幕最底端，所有按钮和输入框整齐平齐，上面一整个就是 Body 部分
+dock_left, dock_center, dock_right = st.columns([2.8, 4.4, 2.8], gap="small")
+
+# -------------------------------------------------------------
+# 【左侧 Dock 操作坞】：⚡ 启动全面代码审查 + 智能聊天/代码粘贴输入框
+# -------------------------------------------------------------
+with dock_left:
+    dk_l1, dk_l2 = st.columns([1.1, 1.7], gap="small")
+    with dk_l1:
+        if st.button("⚡ 启动代码审查", type="primary", use_container_width=True, help="启动 CodeReviewerAgent 深入排查代码质量、隐蔽Bug与安全漏洞"):
+            if not st.session_state.active_code:
+                p = Path("samples/demo_shopping_cart.py")
+                if p.exists():
+                    txt = p.read_text(encoding="utf-8")
+                    st.session_state.active_code = txt
+                    st.session_state.baseline_code = txt
+                    st.session_state.active_file_name = "samples/demo_shopping_cart.py"
+                    st.toast("已自动装载电商购物车样例并启动全面审查！", icon="🚀")
+            st.session_state.pending_task = {
+                "prompt": "/review: 请对当前代码进行全维度的深度全面代码审查，深入排查除零、未关文件、越界与异常掩盖等隐患，并给出修复建议与对比代码",
+                "task_type": "review"
+            }
+            st.rerun()
+
+    with dk_l2:
+        input_text = st.chat_input("输入修改要求，或直接粘贴 Python 源码...")
+        if input_text:
+            cleaned = input_text.strip()
+            pasted = extract_pasted_code(cleaned)
+            if pasted:
+                st.session_state.active_code = pasted
+                st.session_state.baseline_code = pasted
+                st.session_state.active_file_name = "clipboard_code.py"
+                st.session_state.reviewed = False
+                st.session_state.analysis_result = None
+                st.session_state.refactored_code = None
+                st.session_state.pending_task = {
+                    "prompt": "/review: 请对我复制粘贴的 Python 源代码进行全面安全与漏洞审查，排查潜在运行时Bug与安全漏洞",
+                    "task_type": "review"
+                }
+                st.toast("已将您粘贴的代码自动载入中间源代码区，并启动审查！", icon="📋")
+                st.rerun()
+            else:
+                task_type = "review"
+                if cleaned.startswith("/review"):
+                    task_type = "review"
+                elif cleaned.startswith("/refactor"):
+                    task_type = "refactor"
+                elif cleaned.startswith("/test"):
+                    task_type = "test"
+                elif cleaned.startswith("/explain"):
+                    task_type = "explain"
+                elif cleaned == "/":
+                    task_type = "review"
+                    cleaned = "/review: 请审查当前代码"
+
+                if not st.session_state.active_code:
+                    p = Path("samples/demo_shopping_cart.py")
+                    if p.exists():
+                        txt = p.read_text(encoding="utf-8")
+                        st.session_state.active_code = txt
+                        st.session_state.baseline_code = txt
+                        st.session_state.active_file_name = "samples/demo_shopping_cart.py"
+                        st.toast("已自动为您装载电商购物车样例代码！", icon="🚀")
+
+                st.session_state.pending_task = {
+                    "prompt": cleaned if cleaned.startswith("/") else f"针对当前中间源码，我的具体修改需求是：{cleaned}",
+                    "task_type": task_type
+                }
+                st.rerun()
+
+
+# -------------------------------------------------------------
+# 【中间 Dock 操作坞】：源码管理控制台 (上传、样例、导出源码、清空)
+# -------------------------------------------------------------
+with dock_center:
+    if not st.session_state.active_code:
+        emp_c1, emp_c2 = st.columns([1, 1], gap="small")
+        with emp_c1:
+            with st.popover("📂 上传本地 Python 源码", use_container_width=True):
+                st.markdown("##### 📂 上传本地 .py 源码文件")
+                up_initial = st.file_uploader("选择 Python 文件", type=["py"], key="initial_source_upload")
+                if up_initial is not None:
+                    content = up_initial.read().decode("utf-8", errors="replace")
+                    st.session_state.active_code = content
+                    st.session_state.baseline_code = content
+                    st.session_state.active_file_name = up_initial.name
+                    st.session_state.reviewed = False
+                    st.session_state.analysis_result = None
+                    st.session_state.refactored_code = None
+                    st.toast(f"已装载代码: {up_initial.name}", icon="📤")
+                    st.rerun()
+        with emp_c2:
+            if st.button("🚀 载入电商购物车样例", use_container_width=True, help="一键载入含除零、句柄未关缺陷的电商购物车代码"):
+                p = Path("samples/demo_shopping_cart.py")
+                if p.exists():
+                    txt = p.read_text(encoding="utf-8")
+                    st.session_state.active_code = txt
+                    st.session_state.baseline_code = txt
+                    st.session_state.active_file_name = "samples/demo_shopping_cart.py"
+                    st.session_state.reviewed = False
+                    st.session_state.analysis_result = None
+                    st.session_state.refactored_code = None
+                    st.toast("已载入电商购物车样例代码！", icon="🚀")
+                    st.rerun()
+    else:
+        op_c1, op_c2, op_c3, op_c4 = st.columns([2.4, 2.4, 3.2, 0.8], gap="small")
+        with op_c1:
+            with st.popover("📤 上传代码", use_container_width=True):
+                st.markdown("##### 📤 上传本地 Python 源码")
+                up_replace = st.file_uploader("选择 .py 文件", type=["py"], key="replace_source_upload")
+                if up_replace is not None:
+                    c = up_replace.read().decode("utf-8", errors="replace")
+                    if c != st.session_state.active_code:
+                        st.session_state.active_code = c
+                        st.session_state.baseline_code = c
+                        st.session_state.active_file_name = up_replace.name
+                        st.session_state.reviewed = False
+                        st.session_state.analysis_result = None
+                        st.session_state.refactored_code = None
+                        st.toast(f"已更新源码: {up_replace.name}", icon="📤")
+                        st.rerun()
+        with op_c2:
+            with st.popover("📚 样例代码", use_container_width=True):
+                st.markdown("##### 📚 快速载入测试样例")
+                sample_files = {
+                    "电商购物车 (含除零/泄漏)": "samples/demo_shopping_cart.py",
+                    "典型风险缺陷样例": "samples/buggy_code.py",
+                    "算法函数集": "samples/math_utils.py",
+                }
+                sel_sample = st.selectbox("选择测试样例文件", list(sample_files.keys()))
+                if st.button("载入选中样例", use_container_width=True):
+                    sp = Path(sample_files[sel_sample])
+                    if sp.exists():
+                        st.session_state.active_code = sp.read_text(encoding="utf-8")
+                        st.session_state.baseline_code = st.session_state.active_code
+                        st.session_state.active_file_name = sample_files[sel_sample]
+                        st.session_state.reviewed = False
+                        st.session_state.analysis_result = None
+                        st.session_state.refactored_code = None
+                        st.rerun()
+        with op_c3:
+            out_filename = Path(st.session_state.get("active_file_name", "code.py")).name
+            if not out_filename.endswith(".py"):
+                out_filename += ".py"
+            export_filename = f"reviewed_{out_filename}" if st.session_state.get("reviewed") else out_filename
+            st.download_button(
+                label="💾 导出修改后源码",
+                data=st.session_state.active_code,
+                file_name=export_filename,
+                mime="text/x-python",
+                use_container_width=True,
+                help="将当前已审查并修改的 Python 源码导出下载至本地"
+            )
+        with op_c4:
+            if st.button("🗑️", help="清空当前代码，恢复初始空状态", use_container_width=True):
+                st.session_state.active_code = ""
+                st.session_state.baseline_code = ""
+                st.session_state.active_file_name = "未加载代码"
+                st.session_state.reviewed = False
+                st.session_state.analysis_result = None
+                st.session_state.refactored_code = None
+                st.rerun()
+
+
+# -------------------------------------------------------------
+# 【右侧 Dock 操作坞】：📥 导出报告与诊断总结
+# -------------------------------------------------------------
+with dock_right:
+    if st.session_state.active_code and st.session_state.reviewed:
+        issues = st.session_state.get("detected_issues", [])
+        crit_cnt = sum(1 for i in issues if getattr(i.severity, 'value', str(i.severity)) == "CRITICAL")
+        high_cnt = sum(1 for i in issues if getattr(i.severity, 'value', str(i.severity)) == "HIGH")
+        med_cnt = sum(1 for i in issues if getattr(i.severity, 'value', str(i.severity)) == "MEDIUM")
+        health_score = max(0, 100 - crit_cnt * 25 - high_cnt * 15 - med_cnt * 5)
+        grade_text = "A (优秀)" if health_score >= 90 else ("B (良好)" if health_score >= 75 else ("C (需整改)" if health_score >= 60 else "D (高危风险)"))
+
+        with st.popover("📥 导出审计诊断报告", use_container_width=True):
+            st.markdown("##### 📥 导出完整安全与质量审计报告")
+            rep_lines = [
+                f"# Python 源代码安全与缺陷审计报告",
+                f"- **审计目标**: `{Path(st.session_state.get('active_file_name', 'source.py')).name}`",
+                f"- **安全评分**: **{health_score} / 100** ({grade_text})",
+                f"- **缺陷总计**: {len(issues)} 处 (致命 {crit_cnt} | 高危 {high_cnt} | 中危 {med_cnt})",
+                f"\n## 一、缺陷清单与深度整改方案",
+            ]
+            for idx, iss in enumerate(issues, 1):
+                sev_str = getattr(iss.severity, 'value', str(iss.severity))
+                line_no = getattr(iss, 'line', 1)
+                cat_name = getattr(iss, 'category', '未知分类')
+                desc = getattr(iss, 'description', '')
+                sugg = getattr(iss, 'suggestion', '')
+                snip = getattr(iss, 'snippet', '')
+                rep_lines.append(f"### [R-{idx:02d}] [{sev_str}] 第 {line_no} 行: {cat_name}")
+                if snip:
+                    rep_lines.append(f"```python\n# 缺陷代码行\n{snip}\n```")
+                rep_lines.append(f"- **机理剖析**: {desc}")
+                rep_lines.append(f"- **修复建议**: {sugg}\n")
+
+            if st.session_state.get("analysis_result"):
+                p2_rep = st.session_state.analysis_result.get("phase2", {}).get("report", "")
+                if p2_rep:
+                    rep_lines.append(f"\n## 二、专家智能体综合审计报告\n{p2_rep}")
+
+            full_report_md = "\n".join(rep_lines)
+            st.download_button(
+                label="💾 下载 Markdown 报告",
+                data=full_report_md,
+                file_name=f"audit_report_{Path(st.session_state.get('active_file_name', 'code')).stem}.md",
+                mime="text/markdown",
+                use_container_width=True
+            )
+    else:
+        st.markdown('<div style="height: 38px; display: flex; align-items: center; justify-content: center; background: #0f172a; border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 8px; font-size: 0.8rem; color: #64748b; user-select: none;">🛡️ 审计就绪 · 待审查后可在此导出报告</div>', unsafe_allow_html=True)
 
