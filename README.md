@@ -7,19 +7,8 @@
 [![Tests](https://img.shields.io/badge/pytest-22%20passed-brightgreen.svg)]()
 
 > **CodeReviewerAgent** 围绕课程大作业规范核心主题打造：
-> **「代码审查Agent \| 分析代码质量、发现潜在Bug、给出改进建议 \| LLM调用、Prompt设计、代码解析」**。
+> **「代码审查Agent | 分析代码质量、发现潜在Bug、给出改进建议 | LLM调用、Prompt设计、代码解析」**。
 > 系统底层全面基于主流智能体框架 **LangChain** 构建，严格实现 **`输入 ➔ 推理 (Reasoning) ➔ 工具调用 (Action) ➔ 环境反馈 (Observation) ➔ 成果输出 (Output)`** 的完整 ReAct 循环，集成 **文件读取、AST静态代码解析、沙箱代码执行与单测自纠错**，具备 **多轮上下文记忆** 与 **错误重试/超时熔断机制**，提供 **Rich 终端交互 CLI** 与 **现代可视化 Web 交互工作台** 双入口。
-
----
-
-## 📋 评审标准与得分点对照矩阵 (4大核心维度)
-
-| 评审维度 | 权重 | 评分要点 | 本项目实现方案与代码位置 | 得分要点索引 |
-| :--- | :---: | :--- | :--- | :--- |
-| **功能完整性** | **40%** | • 核心功能是否可用<br/>• 边界情况处理 | • **代码质量全面分析**：语法合规、函数规模、圈复杂度、代码风险扫描；<br/>• **深层 Bug 发现**：除零崩溃 (`ZeroDivisionError`)、未关文件 (`Resource Leak`)、空序列崩溃 (`ValueError/IndexError`)、异常掩盖 (`Bare Except`)、可变默认参数等；<br/>• **改进建议输出**：结构化报告 + 修复代码对比 (Diff)；<br/>• **边界处理**：空文本友好捕获、语法错误精确锁定行号、无限循环与沙箱超时 5s 强制熔断。 | [`code_analyzer/query/rule_engine.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/query/rule_engine.py)<br/>[`code_analyzer/tools/exec_tools.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/tools/exec_tools.py)<br/>[`web_app.py`](file:///e:/python_project/SoftEngineeing/web_app.py) |
-| **Agent 架构** | **30%** | • 是否体现 Agent 设计模式<br/>• 架构清晰度 | • **主流框架**：全面采用 LangChain (`ChatOpenAI`, `StructuredTool`, `BaseMessage`)；<br/>• **ReAct 设计模式**：推理 ➔ 工具 ➔ 观察 ➔ 总结循环；<br/>• **两阶段流水线 (Pipeline)**：Phase 1 静态 AST 规则初筛 ➔ Phase 2 Agent 深度推理 ➔ Phase 3 聚合校验；<br/>• **上下文记忆**：基于 LangChain 消息栈的滑动窗口 Memory。 | [`code_analyzer/agents/base_agent.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/agents/base_agent.py)<br/>[`code_analyzer/core/memory.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/core/memory.py)<br/>[`code_analyzer/query/pipeline.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/query/pipeline.py) |
-| **代码质量** | **20%** | • 规范性与可维护性<br/>• 错误处理与重试 | • **规范性**：PEP 8 命名规范、Pydantic 强类型数据契约；<br/>• **自动化测试**：22 个 pytest 单元测试 100% 通过（覆盖 Agent 循环、LangChain 工具、记忆、流水线）；<br/>• **容错与重试**：LLM 调用带指数退避重试 (Tenacity)，子进程沙箱隔离，最大迭代次数限制防死循环。 | [`code_analyzer/core/llm_client.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/core/llm_client.py)<br/>[`code_analyzer/schemas/code_types.py`](file:///e:/python_project/SoftEngineeing/code_analyzer/schemas/code_types.py)<br/>[`tests/`](file:///e:/python_project/SoftEngineeing/tests/) |
-| **文档** | **10%** | • README、使用说明<br/>• 技术文档 | • 详尽的架构图 (Mermaid)、交互说明、启动批处理脚本 (`start_all.bat` / `kill_all.bat`)、API 规范 (`docs/api_spec.md`)、多智能体规范 (`AGENTS.md`)。 | [`README.md`](file:///e:/python_project/SoftEngineeing/README.md)<br/>[`AGENTS.md`](file:///e:/python_project/SoftEngineeing/AGENTS.md) |
 
 ---
 
@@ -63,10 +52,58 @@ graph TD
 | 工具名称 (`Tool`) | 职责定位 | 典型应用场景 |
 | :--- | :--- | :--- |
 | **`read_file`** | 安全文件读取 | 审查外部指定路径的 `.py` 脚本内容 |
-| **`lint_code`** | AST 语法与异味扫描 | 零 LLM 极速提取函数类列表、参数量超标、静态语法错误 |
+| **`lint_code`** | AST 语法与规则扫描 | 零 LLM 极速提取函数类列表、参数量超标、静态语法错误 |
 | **`execute_python_code`** | 隔离子进程沙箱执行 | 动态运行可疑代码，验证是否真实触发 `ZeroDivisionError` 或 `ValueError` |
 | **`run_pytest`** | 自动化测试套件执行 | 运行单元测试套件，执行测试-纠错自闭环验证 |
 | **`search_code_snippets`** | 代码关键词与正则搜索 | 快速检索全局硬编码配置、裸 except 等模式 |
+
+---
+
+## 🛡️ 核心亮点：工业级智能代码审查 (Code Review) 体系
+
+本系统的核心亮点在于构建了 **全自动化、深层次、闭环式的智能代码审查 (Code Review) 引擎**。不同于传统单次调用大模型的浅层问答，系统采用动静结合的两阶段流水线，专注于深度挖掘潜在运行时崩溃与安全隐患，并提供立即可验证的修复方案：
+
+### 1. 两阶段智能混合审查流水线 (Hybrid Review Pipeline)
+- **Phase 1: 静态 AST 规则极速初筛 (RuleEngine)**：
+  - 基于 Python 原生抽象语法树（AST）进行零开销毫秒级解析；
+  - 核心针对四大致命隐患进行模式匹配与特征提取：
+    - 🔴 **除零崩溃风险** (`ZeroDivisionError`): 空容器长度作除数、未做分母非零防护；
+    - 🟠 **资源未释放泄漏** (`Resource Leak`): 裸 `open()` 打开文件未通过 `with` 上下文管理器正确关闭句柄；
+    - 🔴 **空序列极值/越界崩溃** (`ValueError/IndexError`): 在空列表上直接调用 `max()`/`min()` 导致程序致命崩溃；
+    - 🟠 **异常静默吞噬掩盖** (`Bare Except`): 使用裸 `except:` 或捕获后直接 `pass`，掩盖底层系统严重缺陷。
+- **Phase 2: 深度 ReAct 专家审查 (CodeReviewerAgent)**：
+  - 将 Phase 1 提取的结构化特征线索注入 LangChain Agent 上下文；
+  - Agent 结合业务场景与执行路径进行多步深度推理，必要时调用沙箱工具动态触发验证，输出成因机理与针对性修复方案；
+- **Phase 3: 交叉验证与去重排序 (Verifier)**：
+  - 自动整合静态规则结果与 Agent 深度审计建议，去重并按危害严重级别优先级降序排列。
+
+### 2. 工业级多层级缺陷诊断与机理透视 (Deep Risk Diagnosis)
+- **严格三级严重度分级**：
+  - 🔴 **致命崩溃 (P0 - CRITICAL)**：除零、空序列操作、下标越界等可导致服务直接宕机的严重缺陷；
+  - 🟠 **高危安全与泄漏 (P1 - HIGH)**：未关文件句柄资源泄漏、裸 except 静默吞异常等潜在高危隐患；
+  - 🔵 **中危与可维护性 (P2 - MEDIUM)**：参数过多、过度嵌套、类型不安全等代码异味与架构坏味道。
+- **高可读性结构化缺陷卡片**：
+  - 每一处风险均提供：**缺陷编号 `[R-01]`**、**精准原代码行号**、**缺陷代码片段切片**、**底层成因剖析** 及 **AI 推荐整改方案**；
+  - 源码视图精准关联高亮：行号旁边醒目标记风险芯片（🔴 Critical / 🟠 High / 🔵 Medium），支持平滑滚动与强对比高亮定位。
+
+### 3. 量化安全健康评分与评级模型 (Health Score & Grade)
+- **科学加权扣分评估算法**：
+  $$\text{Health Score} = \max(0, 100 - N_{\text{crit}} \times 25 - N_{\text{high}} \times 15 - N_{\text{med}} \times 5)$$
+- **四级直观质量评级**：
+  - `90 - 100` 分 ➔ **A (优秀)**：代码规范严密，无高危及致命缺陷；
+  - `75 - 89` 分 ➔ **B (良好)**：存在轻微可维护性建议，可直接上线；
+  - `60 - 74` 分 ➔ **C (需整改)**：存在资源泄漏或高危异常掩盖，建议整改；
+  - `< 60` 分 ➔ **D (高危风险)**：存在致命运行时崩溃漏洞，严禁上线。
+
+### 4. 自动代码修复与自闭环整改 (Closed-loop Auto-Fix & Diff)
+- **一键精准修复**：用户可一键将 AI 推荐的修复方案应用到中间源码区，直接完成除零保护、`with` 语句重构与异常捕获升级；
+- **修改前后差异比对 (Diff Viewer)**：清晰呈现原始代码与重构修复代码的红绿逐行增删比对，确保每一处代码改动清晰可审计；
+- **一键导出合规审计报告**：一键生成符合企业标准的 Markdown 代码安全审计合规报告，内含评分、指标汇总、缺陷明细与整改依据。
+
+### 5. 多模态极简交互与双向触发
+- **快捷斜杠指令**：支持输入 `/审查` 或 `/review` 极速发起全面审计；
+- **自然语言直接对话**：支持输入 *“帮我检查一下这段代码有没有崩溃风险”*，意图识别引擎自动精准分发；
+- **剪贴板代码即贴即审**：在输入框直接粘贴 Python 源码并回车，系统自动提取代码、装入工作台并即刻触发全流程审查闭环。
 
 ---
 
@@ -121,33 +158,6 @@ tests/test_tools.py ......                               [100%]
 
 ---
 
-## 🎨 现代三列工作台布局与可视化特色
-
-系统提供极具工业级质感的 **三列并排 IDE 工作台**（左侧 AI 助手 + 中间源代码 + 右侧风险点），并实现流畅的渐进式状态流转（初始双空状态 ➔ 粘贴/上传代码即刻填充中间区 ➔ 审查完成后右侧同步涌现结构化风险）：
-
-1. **左侧 AI Copilot 对话伴生栏 (占比 28%)**：
-   - **全流程 ReAct 轨迹可视化**：完整可视化展现 `[输入 Input]` ➔ `[推理 Reasoning]` ➔ `[工具调用 Tool Call]` ➔ `[环境观察 Observation]` ➔ `[成果输出 Output]` 链路与折叠耗时日志；
-   - **Claude AI 风格输入框快捷指令**：漂浮在输入框上方的 4 个优雅胶囊药丸按钮（`⚡ 全面审查`、`➗ 崩溃排查`、`📂 资源审计`、`🛡️ 异常防御`）；
-   - **智能剪贴板代码识别**：在底部聊天框中无论是提问还是直接粘贴一段 Python 代码，助手均能智能提取并自动装入中间源代码区，立即触发审查闭环。
-
-2. **中间源代码检视与编辑工作台 (占比 44%)**：
-   - **初始优雅空状态**：未加载代码时展示现代化空卡片，支持【📤 本地 .py 上传】与【🚀 一键载入电商购物车样例】；
-   - **双模式自由切换**：
-     - `🌟 源码风险透视`：精准行号显示；审查后自动为有风险的代码行打上红色（🔴 致命崩溃）与橙色（🟠 高危安全）背景高亮，悬停即刻浮现缺陷成因与诊断浮窗；
-     - `✏️ 在线交互编辑`：随时在线修改或调试代码；
-   - **抽屉拓展工具**：底部可折叠展开【🔀 修改前后对比 Diff Viewer】与【🧪 沙箱终端 Terminal】。
-
-3. **右侧风险点与缺陷诊断看板 (占比 28%)**：
-   - **初始空状态指引**：提示代码已就绪/待审查；
-   - **审查完毕全景呈现**：
-     - **安全健康评分卡**：基于加权算法计算安全分（如 `75/100 评级: B`）；
-     - **分级指标卡**：🔴 致命崩溃风险 (P0) | 🟠 高危安全与泄漏 (P1) | 🔵 中危与风险隐患 (P2)；
-     - **交互式筛选工具条**：支持按严重度单选过滤；
-     - **结构化卡片**：标明标号 `[R-01]`、行号定位、问题代码切片、深入机理剖析、推荐修复建议；
-     - **一键处置**：点击【🛠️ 一键修复】直接生成修复代码，点击【💬 深度追问】发起底层机理剖析，点击【📥 导出报告】下载 Markdown 报告。
-
----
-
 ## 📂 项目结构全景
 
 ```text
@@ -177,7 +187,8 @@ SoftEngineeing/
 ├── cli.py                         # Rich 彩色终端交互客户端 (支持 ReAct 彩色日志)
 ├── tests/                         # 自动化测试套件 (22 个测试用例)
 ├── samples/                       # 演示代码样例
-│   └── demo_shopping_cart.py      # 电商购物车样例 (含除零、句柄未关、空序列崩溃等真实漏洞)
+│   ├── simple_demo.py             # 20行极简演示样例 (涵盖除零、越界、文件未关与吞异常四大缺陷)
+│   └── demo_shopping_cart.py      # 电商购物车样例 (含真实业务多缺陷)
 ├── start_all.bat                  # 一键启动全部服务脚本
 ├── kill_all.bat                   # 一键停止服务脚本
 ├── AGENTS.md                      # Agent 开发规范与架构约定
